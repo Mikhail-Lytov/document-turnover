@@ -1,0 +1,41 @@
+.root {
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #0f172a; /* тёмно-синий */
+}
+
+.label {
+    -fx-text-fill: #e2e8f0;
+}
+
+.card {
+    -fx-background-color: #1e293b;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+}
+
+.button {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: #1d4ed8;
+}
+.button:pressed {
+    -fx-background-color: #1e40af;
+}
+
+.text-field {
+    -fx-background-color: #0b1220, #1e293b;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 10;
+    -fx-text-fill: #e2e8f0;
+    -fx-prompt-text-fill: #94a3b8;
+    -fx-padding: 10 12;
+}
+.text-field:focused {
+    -fx-background-color: #2563eb, #1e293b;
+}
