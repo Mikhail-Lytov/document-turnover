@@ -4,16 +4,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import com.descktop.project.documentturnover.service.ConverterService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class MainView {
 
     private final ConverterService converterService;
-
-    public MainView(ConverterService converterService) {
-        this.converterService = converterService;
-    }
 
     @FXML
     protected VBox convertBox;
