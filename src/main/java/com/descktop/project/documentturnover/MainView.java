@@ -1,19 +1,22 @@
 package com.descktop.project.documentturnover;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import com.descktop.project.documentturnover.service.ConverterService;
+import org.springframework.stereotype.Component;
 
+@Component
 public class MainView {
 
-    //MAIN VIEW COMPONENT
+    private final ConverterService converterService;
+
+    public MainView(ConverterService converterService) {
+        this.converterService = converterService;
+    }
+
     @FXML
     protected VBox convertBox;
-
-
-    //INFORMATION VIEW PARSER
 
     @FXML
     protected VBox vBoxInformationParser;
@@ -28,13 +31,11 @@ public class MainView {
     @FXML
     protected TextField newVersionPathInformationParser;
 
-
-    // MAIN VIEW BUTTON
     @FXML
     protected void converterButtonClick() {
         convertBox.setVisible(true);
         vBoxInformationParser.setVisible(true);
-        System.out.println("Converter button clicked!");
+        System.out.println("Converter button clicked! " + converterService.getClass().getSimpleName());
     }
 
     @FXML
