@@ -16,7 +16,10 @@ public class HelloApplication extends Application {
         fxmlLoader.setRoot(root);
         fxmlLoader.load();
 
-        Scene scene = new Scene(root, 320, 240);
+        Scene scene = new Scene(root, 460, 480);
+        scene.getStylesheets().add(
+                HelloApplication.class.getResource("styles/app.css").toExternalForm()
+        );
         stage.setScene(scene);
         stage.show();
     }

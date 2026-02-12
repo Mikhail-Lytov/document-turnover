@@ -48,7 +48,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<fx:root prefHeight="200.0" prefWidth="200.0" type="BorderPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.descktop.project.documentturnover.MainView">
+<fx:root prefHeight="574.0" prefWidth="1186.0" type="BorderPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.descktop.project.documentturnover.MainView">
    <top>
       <MenuBar BorderPane.alignment="CENTER">
          <menus>
@@ -91,21 +91,27 @@
       </MenuBar>
    </top>
    <left>
-      <VBox prefHeight="258.0" prefWidth="234.0" BorderPane.alignment="CENTER">
+      <VBox prefHeight="258.0" prefWidth="234.0" spacing="8.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
          <children>
-            <ToggleButton mnemonicParsing="false" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Конвертация" />
-            <ToggleButton mnemonicParsing="false" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Поиск с заменой по алфавиту" />
+            <ToggleButton mnemonicParsing="false" onAction="#converterButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Конвертация" />
+            <ToggleButton mnemonicParsing="false" onAction="#searchByAlphabetButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Поиск с заменой по алфавиту" />
             <ToggleButton mnemonicParsing="false" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Поиск с заменой по словам" />
-            <ToggleButton mnemonicParsing="false" prefHeight="104.0" prefWidth="248.0" styleClass="nav-item" text="Настройка системы" />
+            <ToggleButton layoutX="2323232.0" mnemonicParsing="false" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Настройка системы" />
          </children>
       </VBox>
    </left>
    <center>
       <AnchorPane prefHeight="549.0" prefWidth="436.0" BorderPane.alignment="CENTER">
          <children>
-            <VBox prefHeight="553.0" prefWidth="436.0">
+            <VBox fx:id="convertBox" prefHeight="553.0" prefWidth="436.0" visible="false">
+               <padding>
+                  <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+               </padding>
                <children>
-                  <VBox prefHeight="616.0" prefWidth="436.0">
+                  <VBox prefHeight="616.0" prefWidth="436.0" spacing="10.0">
                      <children>
                         <StackPane prefHeight="60.0" prefWidth="436.0">
                            <children>
@@ -119,7 +125,7 @@
                         </StackPane>
                         <StackPane prefHeight="60.0" prefWidth="436.0">
                            <children>
-                              <HBox prefHeight="100.0" prefWidth="200.0">
+                              <HBox prefHeight="100.0" prefWidth="200.0" spacing="8.0">
                                  <children>
                                     <TextField fx:id="tfDirectory" prefHeight="26.0" prefWidth="332.0" promptText="C:\\data\\in  или  /home/user/data" styleClass="field" />
                                     <Button mnemonicParsing="false" prefHeight="29.0" prefWidth="113.0" text="Button">
@@ -132,7 +138,7 @@
                         </StackPane>
                         <StackPane prefHeight="150.0" prefWidth="200.0">
                            <children>
-                              <HBox prefHeight="100.0" prefWidth="200.0">
+                              <HBox prefHeight="100.0" prefWidth="200.0" spacing="8.0">
                                  <children>
                                     <Label text="Конвертировать из" />
                                     <MenuButton mnemonicParsing="false" text="MenuButton">
@@ -165,8 +171,40 @@
       </AnchorPane>
    </center>
    <right>
-      <VBox prefHeight="553.0" prefWidth="193.0" BorderPane.alignment="CENTER">
+      <VBox prefHeight="553.0" prefWidth="508.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
          <children>
+            <VBox fx:id="vBoxInformationParser" prefHeight="200.0" prefWidth="100.0" visible="false">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" text="Результат операции" />
+                  <HBox prefHeight="47.0" prefWidth="484.0">
+                     <children>
+                        <Label text="Всего файлов найдено:" />
+                        <TextField disable="true" promptText="0" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="43.0" prefWidth="484.0">
+                     <children>
+                        <Label text="Количество успешно конвертированных файлов: " />
+                        <TextField disable="true" promptText="0" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="47.0" prefWidth="484.0">
+                     <children>
+                        <Label text="Старая версия" />
+                        <TextField disable="true" promptText="0" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="47.0" prefWidth="484.0">
+                     <children>
+                        <Label text="Новая версия" />
+                        <TextField disable="true" promptText="0" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
             <Label text="Какая-то метоинформация" />
          </children>
       </VBox>

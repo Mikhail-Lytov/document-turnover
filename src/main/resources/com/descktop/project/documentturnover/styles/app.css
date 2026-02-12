@@ -14,9 +14,26 @@
     -fx-padding: 16;
 }
 
+.pane-left {
+    -fx-background-color: #e5e7eb;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 0 1 0 0;
+}
+
+.pane-center {
+    -fx-background-color: #ffffff;
+}
+
+.pane-right {
+    -fx-background-color: #dbeafe;
+}
+
+.nav-item {
+    -fx-background-color: #dbeafe;
+}
 .button {
     -fx-background-color: #2563eb;
-    -fx-text-fill: white;
+    -fx-text-fill: black;
     -fx-background-radius: 10;
     -fx-padding: 10 16;
     -fx-cursor: hand;
