@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root fx:id="root" prefHeight="574.0" prefWidth="1186.0" type="BorderPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.desktop.document.turnover.controller.MainView">
+   <left>
+      <VBox prefWidth="260.0" spacing="8.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
+         <children>
+            <ToggleButton mnemonicParsing="false" onAction="#converterButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Конвертация" />
+            <ToggleButton mnemonicParsing="false" onAction="#searchByAlphabetButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Поиск с заменой по алфавиту" />
+         </children>
+      </VBox>
+   </left>
+   <center>
+      <StackPane fx:id="contentContainer" BorderPane.alignment="CENTER" />
+   </center>
+</fx:root>

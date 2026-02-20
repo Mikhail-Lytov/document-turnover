@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox spacing="16.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.desktop.document.turnover.controller.section.ConverterViewController">
+   <padding>
+      <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+   </padding>
+   <children>
+      <VBox prefWidth="520.0" spacing="10.0">
+         <children>
+            <StackPane prefHeight="60.0" prefWidth="436.0">
+               <children>
+                  <Label text="Конвертация файлов" />
+               </children>
+            </StackPane>
+            <StackPane prefHeight="64.0" prefWidth="436.0">
+               <children>
+                  <Label text="Выберите папку для конвертации данных" />
+               </children>
+            </StackPane>
+            <StackPane prefHeight="60.0" prefWidth="436.0">
+               <children>
+                  <HBox spacing="8.0">
+                     <children>
+                        <TextField fx:id="tfDirectory" prefHeight="26.0" prefWidth="332.0" promptText="C:\\data\\in  или  /home/user/data" styleClass="field" />
+                        <Button mnemonicParsing="false" onAction="#directorySelectedButtonClick" prefHeight="29.0" prefWidth="113.0" text="Выбрать" />
+                     </children>
+                  </HBox>
+               </children>
+            </StackPane>
+            <StackPane prefHeight="150.0" prefWidth="200.0">
+               <children>
+                  <HBox spacing="8.0">
+                     <children>
+                        <Label text="Конвертировать из" />
+                        <MenuButton fx:id="typeFrom" mnemonicParsing="false" text="формата" />
+                        <Label text="в" />
+                        <MenuButton fx:id="typeTo" mnemonicParsing="false" text="формат" />
+                     </children>
+                  </HBox>
+               </children>
+            </StackPane>
+            <StackPane prefHeight="150.0" prefWidth="200.0">
+               <children>
+                  <Button fx:id="startConverterButton" mnemonicParsing="false" onAction="#startConverterButtonClick" text="Старт" />
+               </children>
+            </StackPane>
+         </children>
+      </VBox>
+
+      <VBox prefWidth="520.0" spacing="8.0">
+         <children>
+            <HBox spacing="8.0">
+               <children>
+                  <Label text="Всего файлов в папке:" />
+                  <TextField fx:id="allFilesInformationParser" disable="true" />
+               </children>
+            </HBox>
+            <HBox spacing="8.0">
+               <children>
+                  <Label text="Файлов конвертировано" />
+                  <TextField fx:id="goodConverterInformationParser" disable="true" />
+               </children>
+            </HBox>
+            <HBox spacing="8.0">
+               <children>
+                  <Label text="Путь к бекапу" />
+                  <TextField fx:id="oldVersionPathInformationParser" disable="true" />
+               </children>
+            </HBox>
+            <HBox spacing="8.0">
+               <children>
+                  <Label text="Путь к конвертированной папке" />
+                  <TextField fx:id="newVersionPathInformationParser" disable="true" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</HBox>

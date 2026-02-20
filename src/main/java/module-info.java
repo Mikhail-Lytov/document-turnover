@@ -19,11 +19,11 @@ module com.descktop.project.documentturnover {
     requires static lombok;
     requires jacob;
 
-    opens com.descktop.project.documentturnover.service.impl.converter to spring.beans, spring.core, spring.context;
-    opens com.descktop.project.documentturnover to javafx.fxml, spring.core, spring.beans, spring.context;
-    exports com.descktop.project.documentturnover;
-    exports com.descktop.project.documentturnover.controller;
-    opens com.descktop.project.documentturnover.controller to javafx.fxml, spring.beans, spring.context, spring.core;
-    exports com.descktop.project.documentturnover.controller.section;
-    opens com.descktop.project.documentturnover.controller.section to javafx.fxml, spring.beans, spring.context, spring.core;
+    opens com.desktop.document.turnover.service.impl.converter to spring.beans, spring.core, spring.context;
+    opens com.desktop.document.turnover to javafx.fxml, spring.core, spring.beans, spring.context;
+    exports com.desktop.document.turnover;
+    exports com.desktop.document.turnover.controller;
+    opens com.desktop.document.turnover.controller to javafx.fxml, spring.beans, spring.context, spring.core;
+    exports com.desktop.document.turnover.controller.section;
+    opens com.desktop.document.turnover.controller.section to javafx.fxml, spring.beans, spring.context, spring.core;
 }

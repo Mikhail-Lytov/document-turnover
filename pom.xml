@@ -160,7 +160,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                com.descktop.project.documentturnover/com.descktop.project.documentturnover.HelloApplication
+                                com.desktop.document.turnover/com.desktop.document.turnover.DocumentTurnoverApplication
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
