@@ -177,36 +177,36 @@
             <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
          </padding>
          <children>
-            <VBox fx:id="vBoxInformationParser" prefHeight="200.0" prefWidth="100.0" visible="false">
+            <VBox fx:id="vBoxInformationParser" prefHeight="200.0" prefWidth="100.0">
                <children>
-                  <Label alignment="CENTER" contentDisplay="CENTER" text="Результат операции" />
-                  <HBox prefHeight="47.0" prefWidth="484.0">
+                  <HBox prefHeight="100.0" prefWidth="200.0">
                      <children>
-                        <Label text="Всего файлов найдено:" />
-                        <TextField disable="true" promptText="0" />
+                        <Label text="Всего файлов в папке:" textOverrun="WORD_ELLIPSIS" />
+                        <TextField fx:id="allFilesInformationParser" disable="true" />
                      </children>
                   </HBox>
-                  <HBox prefHeight="43.0" prefWidth="484.0">
+                  <HBox prefHeight="100.0" prefWidth="200.0">
                      <children>
-                        <Label text="Количество успешно конвертированных файлов: " />
-                        <TextField disable="true" promptText="0" />
+                        <Label text="Файлов конвертировано" textOverrun="WORD_ELLIPSIS" />
+                        <TextField fx:id="goodConverterInformationParser" disable="true" />
                      </children>
                   </HBox>
-                  <HBox prefHeight="47.0" prefWidth="484.0">
+                  <HBox prefHeight="100.0" prefWidth="200.0">
                      <children>
-                        <Label text="Старая версия" />
-                        <TextField disable="true" promptText="0" />
+                        <Label text="Путь к бекапу" textOverrun="WORD_ELLIPSIS" />
+                        <TextField fx:id="oldVersionPathInformationParser" disable="true" />
+                        <Button mnemonicParsing="false" text="Провайдер" />
                      </children>
                   </HBox>
-                  <HBox prefHeight="47.0" prefWidth="484.0">
+                  <HBox prefHeight="100.0" prefWidth="200.0">
                      <children>
-                        <Label text="Новая версия" />
-                        <TextField disable="true" promptText="0" />
+                        <Label text="Путь к конвертированной папке" textOverrun="WORD_ELLIPSIS" />
+                        <TextField disable="true" />
+                        <Button mnemonicParsing="false" text="Провайдер" />
                      </children>
                   </HBox>
                </children>
             </VBox>
-            <Label text="Какая-то метоинформация" />
          </children>
       </VBox>
    </right>
