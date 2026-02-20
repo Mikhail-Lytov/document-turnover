@@ -4,14 +4,18 @@ import lombok.Getter;
 
 public enum TypeDocs {
 
-    DOCX("docx"),
+    DOCX("docx", 16),
 
-    PDF("pdf");
+    PDF("pdf", 17);
 
     @Getter
     private final String name;
-    TypeDocs(String name) {
+
+    @Getter
+    private final int wordFormat;
+    TypeDocs(String name, int wordFormat) {
         this.name = name;
+        this.wordFormat = wordFormat;
     }
 
     @Override

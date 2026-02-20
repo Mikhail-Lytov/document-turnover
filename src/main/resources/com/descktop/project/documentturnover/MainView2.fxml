@@ -131,7 +131,8 @@
                                     <Button fx:id="directorySelectButton" mnemonicParsing="false" onAction="#directorySelectedButtonClick" prefHeight="29.0" prefWidth="113.0" text="Выбрать">
                                        <opaqueInsets>
                                           <Insets />
-                                       </opaqueInsets></Button>
+                                       </opaqueInsets>
+                                    </Button>
                                  </children>
                               </HBox>
                            </children>
@@ -141,14 +142,14 @@
                               <HBox prefHeight="100.0" prefWidth="200.0" spacing="8.0">
                                  <children>
                                     <Label text="Конвертировать из" />
-                                    <MenuButton fx:id="typeFrom" mnemonicParsing="false" text="MenuButton">
+                                    <MenuButton fx:id="typeFrom" mnemonicParsing="false" text="формата">
                                       <items>
                                         <MenuItem mnemonicParsing="false" text="PDF" />
                                         <MenuItem mnemonicParsing="false" text="DOCX" />
                                       </items>
                                     </MenuButton>
                                     <Label text="в" />
-                                    <MenuButton fx:id="typeTo" mnemonicParsing="false" text="MenuButton">
+                                    <MenuButton fx:id="typeTo" mnemonicParsing="false" text="формат">
                                       <items>
                                         <MenuItem mnemonicParsing="false" text="Action 1" />
                                         <MenuItem mnemonicParsing="false" text="Action 2" />
@@ -160,7 +161,7 @@
                         </StackPane>
                         <StackPane prefHeight="150.0" prefWidth="200.0">
                            <children>
-                              <Button mnemonicParsing="false" text="Старт" />
+                              <Button fx:id="startConverterButton" mnemonicParsing="false" onAction="#startConverterButtonClick" text="Старт" />
                            </children>
                         </StackPane>
                      </children>

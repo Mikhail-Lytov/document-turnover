@@ -17,8 +17,9 @@ module com.descktop.project.documentturnover {
     requires com.almasb.fxgl.all;
     requires jakarta.annotation;
     requires static lombok;
+    requires jacob;
 
-    opens com.descktop.project.documentturnover.service to spring.beans, spring.core, spring.context;
+    opens com.descktop.project.documentturnover.service.impl.converter to spring.beans, spring.core, spring.context;
     opens com.descktop.project.documentturnover to javafx.fxml, spring.core, spring.beans, spring.context;
     exports com.descktop.project.documentturnover;
     exports com.descktop.project.documentturnover.controller;
