@@ -6,7 +6,11 @@ public enum TypeDocs {
 
     DOCX("docx", 16),
 
-    PDF("pdf", 17);
+    PDF("pdf", 17),
+
+    DOC("doc", 0),
+
+    DOS("HTML", 10 );
 
     @Getter
     private final String name;
