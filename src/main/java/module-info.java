@@ -24,4 +24,6 @@ module com.descktop.project.documentturnover {
     exports com.descktop.project.documentturnover;
     exports com.descktop.project.documentturnover.controller;
     opens com.descktop.project.documentturnover.controller to javafx.fxml, spring.beans, spring.context, spring.core;
+    exports com.descktop.project.documentturnover.controller.section;
+    opens com.descktop.project.documentturnover.controller.section to javafx.fxml, spring.beans, spring.context, spring.core;
 }
