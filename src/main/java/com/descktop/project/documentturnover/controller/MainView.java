@@ -134,10 +134,10 @@ public class MainView {
         int allFiles = converterServiceImpl.getFilesCountByType(selectedDirectory, selectedTypeFrom);
         int convertedFiles = converterServiceImpl.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo);
 
-        allFilesInformationParser.setText(String.valueOf(allFiles));
-        goodConverterInformationParser.setText(String.valueOf(convertedFiles));
-        oldVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
-        newVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
+       // allFilesInformationParser.setText(String.valueOf(allFiles));
+        //goodConverterInformationParser.setText(String.valueOf(convertedFiles));
+        //oldVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
+        //newVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
     }
 
     //
