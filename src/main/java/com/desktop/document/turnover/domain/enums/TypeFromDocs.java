@@ -12,6 +12,8 @@ public enum TypeFromDocs {
 
     DOS("HTML", 10 ),
 
+    RTF("rtf", 6),
+
     EXCEL("XLSX", 61);
 
     @Getter

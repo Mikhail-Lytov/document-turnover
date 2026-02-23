@@ -48,7 +48,8 @@ public class ConverterWordServiceImpl implements ConverterService {
         return List.of(
                 TypeFromDocs.DOS,
                 TypeFromDocs.DOCX,
-                TypeFromDocs.DOC
+                TypeFromDocs.DOC,
+                TypeFromDocs.RTF
         );
     }
 
