@@ -1,6 +1,7 @@
 package com.desktop.document.turnover.service.impl.converter;
 
-import com.desktop.document.turnover.domain.enums.TypeDocs;
+import com.desktop.document.turnover.domain.enums.TypeFromDocs;
+import com.desktop.document.turnover.domain.enums.TypeToDocs;
 import com.desktop.document.turnover.service.api.converter.ConverterService;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.ComThread;
@@ -14,16 +15,17 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
-public class ConverterServiceImpl implements ConverterService {
+public class ConverterWordServiceImpl implements ConverterService {
 
 
     @Override
-    public int getFilesCountByType(Path directory, TypeDocs sourceType) {
+    public int getFilesCountByType(Path directory, TypeFromDocs sourceType) {
         if (directory == null || sourceType == null || !java.nio.file.Files.isDirectory(directory)) {
             return 0;
         }
@@ -31,14 +33,14 @@ public class ConverterServiceImpl implements ConverterService {
     }
 
     @Override
-    public int convertDirectory(Path directory, TypeDocs sourceType, TypeDocs targetType) {
+    public int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType) {
         if (directory == null || sourceType == null || targetType == null) {
             throw new IllegalArgumentException("Directory and types are required");
         }
         if (!java.nio.file.Files.isDirectory(directory)) {
             throw new IllegalArgumentException("Path is not a directory: " + directory);
         }
-        if (sourceType == targetType) {
+        if (Objects.equals(sourceType.getName(), targetType.getName())) {
             return 0;
         }
 
@@ -48,6 +50,15 @@ public class ConverterServiceImpl implements ConverterService {
         }
 
         return convertWithWord(filesToConvert, targetType);
+    }
+
+    @Override
+    public List<TypeFromDocs> getTypes() {
+        return List.of(
+                TypeFromDocs.DOS,
+                TypeFromDocs.DOCX,
+                TypeFromDocs.DOC
+        );
     }
 
     private List<Path> findFilesByExtension(Path directory, String extension) {
@@ -62,7 +73,7 @@ public class ConverterServiceImpl implements ConverterService {
         }
     }
 
-    private int convertWithWord(List<Path> sourceFiles, TypeDocs targetType) {
+    private int convertWithWord(List<Path> sourceFiles, TypeToDocs targetType) {
         ComThread.InitSTA();
         ActiveXComponent word = null;
         Dispatch documents = null;
@@ -110,7 +121,7 @@ public class ConverterServiceImpl implements ConverterService {
         return successCount;
     }
 
-    private Path buildTargetPath(Path sourcePath, TypeDocs targetType) {
+    private Path buildTargetPath(Path sourcePath, TypeToDocs targetType) {
         String fileName = sourcePath.getFileName().toString();
         int extensionPosition = fileName.lastIndexOf('.');
         String baseName = extensionPosition > 0 ? fileName.substring(0, extensionPosition) : fileName;

@@ -1,8 +1,10 @@
 package com.desktop.document.turnover.controller.section;
 
 import com.desktop.document.turnover.domain.enums.ResourcesSystemType;
-import com.desktop.document.turnover.domain.enums.TypeDocs;
-import com.desktop.document.turnover.service.impl.converter.ConverterServiceImpl;
+import com.desktop.document.turnover.domain.enums.TypeFromDocs;
+import com.desktop.document.turnover.domain.enums.TypeToDocs;
+import com.desktop.document.turnover.service.api.converter.ConverterService;
+import com.desktop.document.turnover.service.impl.converter.ConverterStrategy;
 import com.desktop.document.turnover.utils.GenerateMenuButton;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
@@ -12,6 +14,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -19,15 +22,12 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class ConverterSectionHandler {
 
-    private final ConverterServiceImpl converterService;
-    private TypeDocs selectedTypeFrom;
-    private TypeDocs selectedTypeTo;
-
-    public ConverterSectionHandler(ConverterServiceImpl converterService) {
-        this.converterService = converterService;
-    }
+    private final ConverterStrategy converterStrategy;
+    private TypeFromDocs selectedTypeFrom;
+    private TypeToDocs selectedTypeTo;
 
     public void init(MenuButton typeFrom, MenuButton typeTo, Button startConverterButton, TextField tfDirectory) {
         initTypeFrom(typeFrom, startConverterButton, tfDirectory);
@@ -80,6 +80,8 @@ public class ConverterSectionHandler {
         }
 
         Path selectedDirectory = Path.of(tfDirectory.getText());
+        ConverterService converterService = converterStrategy.getConverterService(selectedTypeFrom);
+
         int allFiles = converterService.getFilesCountByType(selectedDirectory, selectedTypeFrom);
         int convertedFiles = converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo);
 
@@ -90,7 +92,7 @@ public class ConverterSectionHandler {
     }
 
     private void initTypeFrom(MenuButton typeFrom, Button startConverterButton, TextField tfDirectory) {
-        GenerateMenuButton.generateMenuButton(typeFrom, TypeDocs.class, selected -> {
+        GenerateMenuButton.generateMenuButton(typeFrom, TypeFromDocs.class, selected -> {
             typeFrom.setText(selected.name());
             selectedTypeFrom = selected;
             updateStartConverterButtonState(startConverterButton, tfDirectory);
@@ -98,7 +100,7 @@ public class ConverterSectionHandler {
     }
 
     private void initTypeTo(MenuButton typeTo, Button startConverterButton, TextField tfDirectory) {
-        GenerateMenuButton.generateMenuButton(typeTo, TypeDocs.class, selected -> {
+        GenerateMenuButton.generateMenuButton(typeTo, TypeToDocs.class, selected -> {
             typeTo.setText(selected.name());
             selectedTypeTo = selected;
             updateStartConverterButtonState(startConverterButton, tfDirectory);
