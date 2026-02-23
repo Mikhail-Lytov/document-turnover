@@ -14,8 +14,12 @@ import java.util.List;
 public class ConverterExcelServiceImpl implements ConverterService {
     @Override
     public int getFilesCountByType(Path directory, TypeFromDocs sourceType) {
-        return 0;
+        if (directory == null || sourceType == null || !java.nio.file.Files.isDirectory(directory)) {
+            return 0;
+        }
+        return findFilesByExtension(directory, sourceType.getName()).size();
     }
+
 
     @Override
     public int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType) {

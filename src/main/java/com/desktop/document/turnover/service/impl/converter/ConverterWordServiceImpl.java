@@ -10,14 +10,9 @@ import com.jacob.com.Variant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +29,8 @@ public class ConverterWordServiceImpl implements ConverterService {
 
     @Override
     public int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType) {
-        if (directory == null || sourceType == null || targetType == null) {
-            throw new IllegalArgumentException("Directory and types are required");
-        }
-        if (!java.nio.file.Files.isDirectory(directory)) {
-            throw new IllegalArgumentException("Path is not a directory: " + directory);
-        }
+        defaultValidate(directory, sourceType, targetType);
+
         if (Objects.equals(sourceType.getName(), targetType.getName())) {
             return 0;
         }
@@ -59,18 +50,6 @@ public class ConverterWordServiceImpl implements ConverterService {
                 TypeFromDocs.DOCX,
                 TypeFromDocs.DOC
         );
-    }
-
-    private List<Path> findFilesByExtension(Path directory, String extension) {
-        String normalizedExtension = "." + extension.toLowerCase(Locale.ROOT);
-        try (Stream<Path> pathStream = java.nio.file.Files.walk(directory)) {
-            return pathStream
-                    .filter(java.nio.file.Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(normalizedExtension))
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to scan directory: " + directory, e);
-        }
     }
 
     private int convertWithWord(List<Path> sourceFiles, TypeToDocs targetType) {
