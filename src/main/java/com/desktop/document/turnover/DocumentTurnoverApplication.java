@@ -34,11 +34,13 @@ public class DocumentTurnoverApplication extends Application {
         fxmlLoader.setRoot(root);
         fxmlLoader.load();
 
-        Scene scene = new Scene(root, 460, 480);
+        Scene scene = new Scene(root, 860, 480);
         scene.getStylesheets().add(
                 DocumentTurnoverApplication.class.getResource("styles/app.css").toExternalForm()
         );
         stage.setScene(scene);
+        stage.setMinWidth(800);
+        stage.setMinHeight(480);
         stage.show();
     }
 
