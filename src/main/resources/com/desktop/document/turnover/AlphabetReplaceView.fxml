@@ -4,7 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="10.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.desktop.document.turnover.controller.section.AlphabetReplaceViewController">
+<VBox spacing="10.0" styleClass="panel" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.desktop.document.turnover.controller.section.AlphabetReplaceViewController">
    <padding>
       <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
    </padding>
