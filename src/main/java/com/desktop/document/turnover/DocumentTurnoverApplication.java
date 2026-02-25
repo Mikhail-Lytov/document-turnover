@@ -66,7 +66,7 @@ public class DocumentTurnoverApplication extends Application {
 
         String resourceName = is64
                 ? "/com/desktop/document/turnover/native/jacob-1.18-x64.dll"
-                : "/native/jacob-1.18-x86.dll";
+                : "/com/desktop/document/turnover/native/jacob-1.18-x86.dll";
 
         try (InputStream in = DocumentTurnoverApplication.class.getResourceAsStream(resourceName)) {
             if (in == null) {
