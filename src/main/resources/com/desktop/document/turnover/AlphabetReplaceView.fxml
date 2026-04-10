@@ -54,7 +54,16 @@
                   <Label text="Всего замен" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                   <TextField fx:id="replaceTotalCountField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                   <Label text="Путь к бэкапу" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                  <TextField fx:id="backupPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  <HBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                     <children>
+                        <TextField fx:id="backupPathField" disable="true" maxWidth="1.7976931348623157E308">
+                           <HBox.hgrow>
+                              <Priority fx:constant="ALWAYS" />
+                           </HBox.hgrow>
+                        </TextField>
+                        <Button fx:id="openBackupPathButton" mnemonicParsing="false" onAction="#openBackupPathButtonClick" text="Открыть" />
+                     </children>
+                  </HBox>
                   <Label text="Основной лог" GridPane.columnIndex="0" GridPane.rowIndex="4" />
                   <TextField fx:id="logPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                   <Label text="Лог контекстов" GridPane.columnIndex="0" GridPane.rowIndex="5" />

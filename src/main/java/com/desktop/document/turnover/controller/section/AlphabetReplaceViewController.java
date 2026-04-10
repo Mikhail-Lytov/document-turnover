@@ -64,6 +64,9 @@ public class AlphabetReplaceViewController {
     private TextField backupPathField;
 
     @FXML
+    private Button openBackupPathButton;
+
+    @FXML
     private TextField logPathField;
 
     @FXML
@@ -106,6 +109,15 @@ public class AlphabetReplaceViewController {
         );
     }
 
+    @FXML
+    protected void openBackupPathButtonClick() {
+        try {
+            alphabetReplaceSectionHandler.openInFileManager(backupPathField.getText());
+        } catch (Exception exception) {
+            showError("открытие бэкапа", exception);
+        }
+    }
+
     private <T> void runTask(Callable<T> action, Consumer<T> onSuccess, String actionName) {
         setBusy(true);
 
@@ -139,6 +151,7 @@ public class AlphabetReplaceViewController {
         logPathField.setText(result.logFile() != null ? result.logFile().toAbsolutePath().toString() : "");
         contextLogPathField.setText(result.contextLogFile() != null ? result.contextLogFile().toAbsolutePath().toString() : "");
         outputArea.setText(result.report());
+        updateActionButtons();
     }
 
     private void setBusy(boolean busy) {
@@ -149,9 +162,11 @@ public class AlphabetReplaceViewController {
     private void updateActionButtons() {
         boolean hasAlphabet = countRules(alphabetContent) > 0;
         boolean hasDirectory = replaceDirectoryField.getText() != null && !replaceDirectoryField.getText().isBlank();
+        boolean hasBackupPath = backupPathField.getText() != null && !backupPathField.getText().isBlank();
 
         startReplaceButton.setDisable(busy || !hasDirectory || !hasAlphabet);
         openAlphabetEditorButton.setDisable(busy);
+        openBackupPathButton.setDisable(!hasBackupPath);
     }
 
     private void updateAlphabetSummary() {

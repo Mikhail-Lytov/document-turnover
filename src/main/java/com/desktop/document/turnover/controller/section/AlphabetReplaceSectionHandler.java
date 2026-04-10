@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -116,6 +117,40 @@ public class AlphabetReplaceSectionHandler {
         return alphabetReplaceService.searchInDocuments(directory, text);
     }
 
+    public void openInFileManager(String pathValue) {
+        Path path = parseExistingPath(pathValue, "Путь к бэкапу").toAbsolutePath().normalize();
+        boolean isDirectory = Files.isDirectory(path);
+        String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+
+        try {
+            if (osName.contains("win")) {
+                if (isDirectory) {
+                    new ProcessBuilder("explorer", path.toString()).start();
+                } else {
+                    new ProcessBuilder("explorer", "/select," + path).start();
+                }
+                return;
+            }
+
+            if (osName.contains("mac")) {
+                if (isDirectory) {
+                    new ProcessBuilder("open", path.toString()).start();
+                } else {
+                    new ProcessBuilder("open", "-R", path.toString()).start();
+                }
+                return;
+            }
+
+            Path target = isDirectory ? path : path.getParent();
+            if (target == null) {
+                throw new IllegalArgumentException("Не удалось определить папку для открытия: " + path);
+            }
+            new ProcessBuilder("xdg-open", target.toString()).start();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Не удалось открыть путь в файловом менеджере: " + exception.getMessage(), exception);
+        }
+    }
+
     private Path parseDirectory(String directoryPath, String fieldName) {
         if (directoryPath == null || directoryPath.isBlank()) {
             throw new IllegalArgumentException(fieldName + " не указана.");
@@ -143,6 +178,19 @@ public class AlphabetReplaceSectionHandler {
         }
         if (!Files.isRegularFile(path)) {
             throw new IllegalArgumentException("Ожидается файл: " + path);
+        }
+
+        return path;
+    }
+
+    private Path parseExistingPath(String pathValue, String fieldName) {
+        if (pathValue == null || pathValue.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " не указан.");
+        }
+
+        Path path = Path.of(pathValue.trim());
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Путь не существует: " + path);
         }
 
         return path;
