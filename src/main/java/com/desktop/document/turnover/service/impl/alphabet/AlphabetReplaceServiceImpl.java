@@ -33,7 +33,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
 
     private static final int WD_FIND_STOP = 0;
     private static final int WD_COLLAPSE_END = 0;
-    private static final int WD_ACTIVE_END_PAGE_NUMBER = 1;
+    private static final int WD_ACTIVE_END_PAGE_NUMBER = 3;
 
     @Override
     public SearchOperationResult searchInDocuments(Path directory, String searchText) {
@@ -70,7 +70,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                     configureFind(find, searchText, false);
 
                     int fileMatches = 0;
-                    Set<Integer> pages = new TreeSet<>();
+                    List<Integer> pages = new ArrayList<>();
 
                     while (executeFind(find)) {
                         fileMatches++;

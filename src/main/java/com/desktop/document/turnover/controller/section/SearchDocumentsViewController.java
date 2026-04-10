@@ -11,8 +11,14 @@ import javafx.stage.Window;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -41,6 +47,7 @@ public class SearchDocumentsViewController {
     @FXML
     private void initialize() {
         alphabetReplaceSectionHandler.initSearch(searchDirectoryField, searchTextField, startSearchButton);
+        outputArea.setEditable(false);
         outputArea.setText("Готово к работе. Выберите папку и запустите поиск.");
     }
 
@@ -52,6 +59,7 @@ public class SearchDocumentsViewController {
 
     @FXML
     protected void startSearchButtonClick() {
+        outputArea.setText("Поиск выполняется, подождите...");
         runTask(
                 () -> alphabetReplaceSectionHandler.search(searchDirectoryField.getText(), searchTextField.getText()),
                 this::applySearchResult,
@@ -87,7 +95,87 @@ public class SearchDocumentsViewController {
     private void applySearchResult(AlphabetReplaceService.SearchOperationResult result) {
         searchFilesCountField.setText(String.valueOf(result.filesScanned()));
         searchMatchesCountField.setText(String.valueOf(result.totalMatches()));
-        outputArea.setText(result.report());
+        outputArea.setText(buildExecutionJournal(result));
+    }
+
+    private String buildExecutionJournal(AlphabetReplaceService.SearchOperationResult result) {
+        List<String> lines = new ArrayList<>();
+        lines.add("=== ЖУРНАЛ ПОИСКА ===");
+        lines.add("Проверено файлов: " + result.filesScanned());
+        lines.add("Найдено совпадений: " + result.totalMatches());
+        lines.add("Файлов с совпадениями: " + result.matches().size());
+
+        if (result.matches().isEmpty()) {
+            lines.add("");
+            lines.add("Совпадения не найдены.");
+        } else {
+            List<AlphabetReplaceService.SearchFileResult> sortedMatches = result.matches().stream()
+                    .sorted(Comparator.comparingInt(AlphabetReplaceService.SearchFileResult::matches).reversed()
+                            .thenComparing(AlphabetReplaceService.SearchFileResult::fileName, String.CASE_INSENSITIVE_ORDER))
+                    .toList();
+
+            lines.add("");
+            lines.add("Совпадения по файлам:");
+            int index = 1;
+            for (AlphabetReplaceService.SearchFileResult fileMatch : sortedMatches) {
+                lines.add(index + ". " + fileMatch.fileName() + " — " + fileMatch.matches() + " " + formatMatchesWord(fileMatch.matches()));
+                lines.add("   " + formatPagesInfo(fileMatch.pages(), fileMatch.matches()));
+                index++;
+            }
+        }
+
+        if (!result.errors().isEmpty()) {
+            lines.add("");
+            lines.add("Ошибки:");
+            for (String error : result.errors()) {
+                lines.add("  - " + error);
+            }
+        }
+
+        return String.join("\n", lines);
+    }
+
+    private String formatPagesInfo(List<Integer> pages, int totalMatches) {
+        if (pages == null || pages.isEmpty()) {
+            return "Страницы: не удалось определить.";
+        }
+
+        Map<Integer, Integer> pageDistribution = new TreeMap<>();
+        for (Integer page : pages) {
+            if (page != null && page > 0) {
+                pageDistribution.merge(page, 1, Integer::sum);
+            }
+        }
+
+        if (pageDistribution.isEmpty()) {
+            return "Страницы: не удалось определить.";
+        }
+
+        String pagesInfo = pageDistribution.entrySet().stream()
+                .map(entry -> entry.getKey() + " (" + entry.getValue() + ")")
+                .collect(Collectors.joining(", "));
+
+        int unknownPagesMatches = Math.max(0, totalMatches - pages.size());
+        if (unknownPagesMatches > 0) {
+            return "Страницы: " + pagesInfo + "; без номера страницы: " + unknownPagesMatches + ".";
+        }
+        return "Страницы: " + pagesInfo + ".";
+    }
+
+    private String formatMatchesWord(int count) {
+        int remainderHundred = count % 100;
+        int remainderTen = count % 10;
+
+        if (remainderHundred >= 11 && remainderHundred <= 14) {
+            return "совпадений";
+        }
+        if (remainderTen == 1) {
+            return "совпадение";
+        }
+        if (remainderTen >= 2 && remainderTen <= 4) {
+            return "совпадения";
+        }
+        return "совпадений";
     }
 
     private void setBusy(boolean busy) {
