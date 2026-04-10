@@ -16,7 +16,7 @@
       <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
    </padding>
    <children>
-      <VBox spacing="10.0" styleClass="panel">
+      <VBox spacing="12.0" styleClass="panel">
          <children>
             <Label styleClass="panel-title" text="Поиск по документам" />
             <Label text="Папка для поиска" />
@@ -32,7 +32,7 @@
             </HBox>
             <Label text="Текст для поиска" />
             <TextField fx:id="searchTextField" maxWidth="1.7976931348623157E308" promptText="Введите слово или фразу" />
-            <Button fx:id="startSearchButton" mnemonicParsing="false" onAction="#startSearchButtonClick" text="Запустить поиск" />
+            <Button fx:id="startSearchButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#startSearchButtonClick" text="Запустить поиск" />
             <Separator />
             <GridPane hgap="8.0" vgap="8.0">
                <children>
@@ -45,7 +45,7 @@
          </children>
       </VBox>
 
-      <VBox spacing="8.0" styleClass="panel">
+      <VBox spacing="10.0" styleClass="panel">
          <children>
             <Label styleClass="panel-title" text="Журнал выполнения" />
             <TextArea fx:id="outputArea" prefRowCount="14" styleClass="result-area" wrapText="true" />

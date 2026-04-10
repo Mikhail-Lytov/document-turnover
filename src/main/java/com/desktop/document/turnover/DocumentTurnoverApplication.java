@@ -43,13 +43,15 @@ public class DocumentTurnoverApplication extends Application {
         fxmlLoader.setRoot(root);
         fxmlLoader.load();
 
-        Scene scene = new Scene(root, 860, 480);
+        Scene scene = new Scene(root, 1186, 640);
         scene.getStylesheets().add(
                 DocumentTurnoverApplication.class.getResource("styles/app.css").toExternalForm()
         );
+        stage.setTitle("Имя программы"); //TODO: доделать имя
         stage.setScene(scene);
         stage.setMinWidth(800);
         stage.setMinHeight(480);
+        stage.centerOnScreen();
         stage.show();
     }
 

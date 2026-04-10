@@ -1,26 +1,204 @@
 .app-root {
-    -fx-background-color: linear-gradient(to bottom right, #f2f6ff, #f6f9fd);
+    -fx-font-family: "JetBrains Mono", "Segoe UI", "Noto Sans", "Sans-Serif";
+    -fx-font-size: 13px;
+
+    -app-bg-top: #f5f7fb;
+    -app-bg-bottom: #edf1f7;
+    -app-grid-tint: rgba(74, 132, 236, 0.09);
+
+    -nav-bg: rgba(255, 255, 255, 0.72);
+    -nav-border: #d8e1ef;
+    -brand-bg: rgba(69, 112, 191, 0.12);
+    -brand-border: rgba(47, 103, 201, 0.28);
+
+    -text-main: #1f2a3c;
+    -text-strong: #0f1726;
+    -text-muted: #6a7489;
+
+    -panel-bg: rgba(255, 255, 255, 0.9);
+    -panel-border: #d6deeb;
+    -panel-shadow: rgba(28, 57, 101, 0.16);
+
+    -control-bg: #f8fbff;
+    -control-border: #cfd9ea;
+    -control-hover: #edf4ff;
+    -control-focus: #5b95ff;
+    -control-text: #121f33;
+    -control-disabled-bg: #f1f5fb;
+
+    -accent: #317cf5;
+    -accent-hover: #226de4;
+    -accent-pressed: #175ac5;
+    -accent-text: #ffffff;
+
+    -nav-item-hover-bg: rgba(57, 109, 205, 0.12);
+    -nav-item-active-bg: rgba(57, 109, 205, 0.22);
+    -nav-item-active-border: rgba(57, 109, 205, 0.5);
+
+    -fx-background-color:
+        linear-gradient(to bottom right, -app-bg-top, -app-bg-bottom),
+        linear-gradient(to right, transparent 0%, -app-grid-tint 56%, transparent 100%);
+}
+
+.app-root.theme-light {
+    -app-bg-top: #f8fbff;
+    -app-bg-bottom: #eef3fb;
+    -app-grid-tint: rgba(82, 138, 239, 0.1);
+
+    -nav-bg: rgba(255, 255, 255, 0.78);
+    -nav-border: #d6dfee;
+    -brand-bg: rgba(62, 109, 194, 0.11);
+    -brand-border: rgba(44, 98, 195, 0.26);
+
+    -text-main: #1c273a;
+    -text-strong: #0f1828;
+    -text-muted: #69738a;
+
+    -panel-bg: rgba(255, 255, 255, 0.92);
+    -panel-border: #d3dcec;
+    -panel-shadow: rgba(42, 73, 120, 0.14);
+
+    -control-bg: #f8fbff;
+    -control-border: #cfd9eb;
+    -control-hover: #edf3ff;
+    -control-focus: #5e96ff;
+    -control-text: #132036;
+    -control-disabled-bg: #f2f6fc;
+
+    -accent: #2f79f2;
+    -accent-hover: #226ade;
+    -accent-pressed: #1859c0;
+
+    -nav-item-hover-bg: rgba(57, 109, 205, 0.11);
+    -nav-item-active-bg: rgba(57, 109, 205, 0.2);
+    -nav-item-active-border: rgba(57, 109, 205, 0.46);
+}
+
+.app-root.theme-dark {
+    -app-bg-top: #20232b;
+    -app-bg-bottom: #14171d;
+    -app-grid-tint: rgba(88, 145, 247, 0.16);
+
+    -nav-bg: rgba(29, 32, 40, 0.84);
+    -nav-border: #333844;
+    -brand-bg: rgba(71, 105, 167, 0.32);
+    -brand-border: rgba(90, 132, 212, 0.44);
+
+    -text-main: #d8dce6;
+    -text-strong: #f3f5fb;
+    -text-muted: #98a0b3;
+
+    -panel-bg: rgba(35, 39, 48, 0.92);
+    -panel-border: #3d4351;
+    -panel-shadow: rgba(0, 0, 0, 0.46);
+
+    -control-bg: #2c303b;
+    -control-border: #4a5264;
+    -control-hover: #353b48;
+    -control-focus: #629bff;
+    -control-text: #e9edf6;
+    -control-disabled-bg: #242832;
+
+    -accent: #4d8fff;
+    -accent-hover: #3a7eea;
+    -accent-pressed: #2f69c5;
+
+    -nav-item-hover-bg: rgba(82, 133, 223, 0.24);
+    -nav-item-active-bg: rgba(82, 133, 223, 0.35);
+    -nav-item-active-border: rgba(104, 152, 233, 0.65);
+}
+
+.label {
+    -fx-text-fill: -text-main;
 }
 
 .app-nav {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #d9e1ee;
+    -fx-background-color: -nav-bg;
+    -fx-border-color: -nav-border;
     -fx-border-width: 0 1 0 0;
 }
 
-.app-content {
-    -fx-padding: 10;
+.brand-block {
+    -fx-background-color: -brand-bg;
+    -fx-background-radius: 12;
+    -fx-border-color: -brand-border;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.brand-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -text-strong;
+}
+
+.brand-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: -text-muted;
+}
+
+.section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -text-muted;
+}
+
+.separator .line {
+    -fx-border-color: -nav-border;
 }
 
 .nav-item {
-    -fx-background-color: #eef3fb;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 14 0 14;
+    -fx-background-color: transparent;
     -fx-background-radius: 10;
-    -fx-border-color: #d4dff0;
+    -fx-border-color: transparent;
     -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -text-main;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-background-color: -nav-item-hover-bg;
 }
 
 .nav-item:selected {
-    -fx-background-color: #d9e8ff;
+    -fx-background-color: -nav-item-active-bg;
+    -fx-border-color: -nav-item-active-border;
+    -fx-text-fill: -text-strong;
+}
+
+.theme-switcher {
+    -fx-padding: 4 0 0 0;
+}
+
+.theme-button {
+    -fx-background-color: -control-bg;
+    -fx-background-radius: 9;
+    -fx-border-color: -control-border;
+    -fx-border-radius: 9;
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -control-text;
+    -fx-cursor: hand;
+}
+
+.theme-button:hover {
+    -fx-background-color: -control-hover;
+}
+
+.theme-button:selected {
+    -fx-background-color: -accent;
+    -fx-border-color: transparent;
+    -fx-text-fill: -accent-text;
+}
+
+.app-content {
+    -fx-padding: 16;
 }
 
 .converter-root {
@@ -28,18 +206,139 @@
 }
 
 .panel {
-    -fx-background-color: #ffffff;
-    -fx-background-radius: 12;
-    -fx-border-color: #dce5f1;
-    -fx-border-radius: 12;
-    -fx-padding: 14;
+    -fx-background-color: -panel-bg;
+    -fx-background-radius: 14;
+    -fx-border-color: -panel-border;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, -panel-shadow, 16, 0.22, 0, 4);
+    -fx-padding: 16;
 }
 
 .panel-title {
     -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -text-strong;
+}
+
+.button,
+.menu-button {
+    -fx-background-color: -control-bg;
+    -fx-background-radius: 8;
+    -fx-border-color: -control-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 8 14 8 14;
+    -fx-font-weight: 600;
+    -fx-text-fill: -control-text;
+    -fx-cursor: hand;
+}
+
+.button:hover,
+.menu-button:hover {
+    -fx-background-color: -control-hover;
+}
+
+.button:pressed,
+.menu-button:pressed {
+    -fx-background-color: -control-border;
+}
+
+#startConverterButton,
+#startReplaceButton,
+#startSearchButton {
+    -fx-background-color: linear-gradient(to bottom, -accent, -accent-hover);
+    -fx-border-color: transparent;
     -fx-font-weight: 700;
+    -fx-text-fill: -accent-text;
+}
+
+#startConverterButton:hover,
+#startReplaceButton:hover,
+#startSearchButton:hover {
+    -fx-background-color: linear-gradient(to bottom, -accent-hover, -accent-pressed);
+}
+
+#startConverterButton:pressed,
+#startReplaceButton:pressed,
+#startSearchButton:pressed {
+    -fx-background-color: -accent-pressed;
+}
+
+#startConverterButton:disabled,
+#startReplaceButton:disabled,
+#startSearchButton:disabled {
+    -fx-opacity: 0.7;
+}
+
+.text-field,
+.text-area {
+    -fx-background-color: -control-bg;
+    -fx-background-radius: 8;
+    -fx-border-color: -control-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: -control-text;
+    -fx-prompt-text-fill: -text-muted;
+    -fx-highlight-fill: -accent;
+    -fx-highlight-text-fill: #ffffff;
+}
+
+.text-field:focused,
+.text-area:focused,
+.button:focused,
+.menu-button:focused,
+.nav-item:focused,
+.theme-button:focused {
+    -fx-border-color: -control-focus;
+    -fx-effect: dropshadow(gaussian, rgba(89, 148, 255, 0.27), 9, 0.22, 0, 0);
+}
+
+.text-field:disabled {
+    -fx-opacity: 1;
+    -fx-background-color: -control-disabled-bg;
+    -fx-text-fill: -text-muted;
+}
+
+.menu-button .arrow {
+    -fx-background-color: -text-muted;
+}
+
+.menu-button:hover .arrow {
+    -fx-background-color: -text-main;
+}
+
+.text-area .content {
+    -fx-background-color: -control-bg;
+    -fx-background-radius: 8;
 }
 
 .result-area {
-    -fx-font-family: "Consolas";
+    -fx-font-family: "JetBrains Mono", "Consolas", "Monaco";
+    -fx-font-size: 12px;
+}
+
+.context-menu {
+    -fx-background-color: -panel-bg;
+    -fx-border-color: -panel-border;
+    -fx-border-width: 1;
+}
+
+.menu-item .label {
+    -fx-text-fill: -text-main;
+}
+
+.menu-item:focused {
+    -fx-background-color: -nav-item-hover-bg;
+}
+
+.scroll-bar:vertical .track,
+.scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: -control-border;
+    -fx-background-radius: 6;
 }
