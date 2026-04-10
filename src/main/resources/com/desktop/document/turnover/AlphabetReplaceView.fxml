@@ -65,9 +65,27 @@
                      </children>
                   </HBox>
                   <Label text="Основной лог" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                  <TextField fx:id="logPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                  <HBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                     <children>
+                        <TextField fx:id="logPathField" disable="true" maxWidth="1.7976931348623157E308">
+                           <HBox.hgrow>
+                              <Priority fx:constant="ALWAYS" />
+                           </HBox.hgrow>
+                        </TextField>
+                        <Button fx:id="openLogPathButton" mnemonicParsing="false" onAction="#openLogPathButtonClick" text="Открыть" />
+                     </children>
+                  </HBox>
                   <Label text="Лог контекстов" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-                  <TextField fx:id="contextLogPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                  <HBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
+                     <children>
+                        <TextField fx:id="contextLogPathField" disable="true" maxWidth="1.7976931348623157E308">
+                           <HBox.hgrow>
+                              <Priority fx:constant="ALWAYS" />
+                           </HBox.hgrow>
+                        </TextField>
+                        <Button fx:id="openContextLogPathButton" mnemonicParsing="false" onAction="#openContextLogPathButtonClick" text="Открыть" />
+                     </children>
+                  </HBox>
                </children>
                <columnConstraints>
                   <ColumnConstraints />

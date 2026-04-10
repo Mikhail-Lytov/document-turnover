@@ -82,7 +82,13 @@ public class AlphabetReplaceViewController {
     private TextField logPathField;
 
     @FXML
+    private Button openLogPathButton;
+
+    @FXML
     private TextField contextLogPathField;
+
+    @FXML
+    private Button openContextLogPathButton;
 
     @FXML
     private TextArea outputArea;
@@ -124,9 +130,27 @@ public class AlphabetReplaceViewController {
     @FXML
     protected void openBackupPathButtonClick() {
         try {
-            alphabetReplaceSectionHandler.openInFileManager(backupPathField.getText());
+            alphabetReplaceSectionHandler.openInFileManager(backupPathField.getText(), "Путь к бэкапу");
         } catch (Exception exception) {
             showError("открытие бэкапа", exception);
+        }
+    }
+
+    @FXML
+    protected void openLogPathButtonClick() {
+        try {
+            alphabetReplaceSectionHandler.openInFileManager(logPathField.getText(), "Путь к основному логу");
+        } catch (Exception exception) {
+            showError("открытие основного лога", exception);
+        }
+    }
+
+    @FXML
+    protected void openContextLogPathButtonClick() {
+        try {
+            alphabetReplaceSectionHandler.openInFileManager(contextLogPathField.getText(), "Путь к логу контекстов");
+        } catch (Exception exception) {
+            showError("открытие лога контекстов", exception);
         }
     }
 
@@ -175,10 +199,14 @@ public class AlphabetReplaceViewController {
         boolean hasAlphabet = countRules(alphabetContent) > 0;
         boolean hasDirectory = replaceDirectoryField.getText() != null && !replaceDirectoryField.getText().isBlank();
         boolean hasBackupPath = backupPathField.getText() != null && !backupPathField.getText().isBlank();
+        boolean hasLogPath = logPathField.getText() != null && !logPathField.getText().isBlank();
+        boolean hasContextLogPath = contextLogPathField.getText() != null && !contextLogPathField.getText().isBlank();
 
         startReplaceButton.setDisable(busy || !hasDirectory || !hasAlphabet);
         openAlphabetEditorButton.setDisable(busy);
         openBackupPathButton.setDisable(!hasBackupPath);
+        openLogPathButton.setDisable(!hasLogPath);
+        openContextLogPathButton.setDisable(!hasContextLogPath);
     }
 
     private void updateAlphabetSummary() {

@@ -118,7 +118,11 @@ public class AlphabetReplaceSectionHandler {
     }
 
     public void openInFileManager(String pathValue) {
-        Path path = parseExistingPath(pathValue, "Путь к бэкапу").toAbsolutePath().normalize();
+        openInFileManager(pathValue, "Путь к бэкапу");
+    }
+
+    public void openInFileManager(String pathValue, String fieldName) {
+        Path path = parseExistingPath(pathValue, fieldName).toAbsolutePath().normalize();
         boolean isDirectory = Files.isDirectory(path);
         String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
 
