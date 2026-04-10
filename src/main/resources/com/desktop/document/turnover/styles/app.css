@@ -318,6 +318,46 @@
     -fx-font-size: 12px;
 }
 
+.source-type-dialog {
+    -fx-background-color: -panel-bg;
+    -fx-background-radius: 14;
+    -fx-border-color: -panel-border;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+}
+
+.source-type-dialog:header .header-panel {
+    -fx-background-color: transparent;
+}
+
+.source-type-dialog:header .header-panel .label {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -text-strong;
+}
+
+.source-type-dialog-content {
+    -fx-padding: 6 0 0 0;
+}
+
+.source-type-toggle {
+    -fx-font-weight: 700;
+}
+
+.dialog-primary-button {
+    -fx-background-color: linear-gradient(to bottom, -accent, -accent-hover);
+    -fx-border-color: transparent;
+    -fx-text-fill: -accent-text;
+}
+
+.dialog-primary-button:hover {
+    -fx-background-color: linear-gradient(to bottom, -accent-hover, -accent-pressed);
+}
+
+.dialog-primary-button:pressed {
+    -fx-background-color: -accent-pressed;
+}
+
 .context-menu {
     -fx-background-color: -panel-bg;
     -fx-border-color: -panel-border;
