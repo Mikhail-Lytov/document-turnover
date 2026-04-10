@@ -15,6 +15,7 @@
          <children>
             <ToggleButton mnemonicParsing="false" onAction="#converterButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Конвертация" />
             <ToggleButton mnemonicParsing="false" onAction="#searchByAlphabetButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Поиск с заменой по алфавиту" />
+            <ToggleButton mnemonicParsing="false" onAction="#searchDocumentsButtonClick" prefHeight="66.0" prefWidth="234.0" styleClass="nav-item" text="Поиск по документам" />
          </children>
       </VBox>
    </left>

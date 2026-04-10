@@ -12,6 +12,17 @@
     -fx-padding: 10;
 }
 
+.nav-item {
+    -fx-background-color: #eef3fb;
+    -fx-background-radius: 10;
+    -fx-border-color: #d4dff0;
+    -fx-border-radius: 10;
+}
+
+.nav-item:selected {
+    -fx-background-color: #d9e8ff;
+}
+
 .converter-root {
     -fx-alignment: top-left;
 }
@@ -27,4 +38,8 @@
 .panel-title {
     -fx-font-size: 16px;
     -fx-font-weight: 700;
+}
+
+.result-area {
+    -fx-font-family: "Consolas";
 }

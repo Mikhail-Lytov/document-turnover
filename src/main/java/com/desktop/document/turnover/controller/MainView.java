@@ -26,6 +26,7 @@ public class MainView {
 
     private Node converterView;
     private Node alphabetReplaceView;
+    private Node searchDocumentsView;
 
     @FXML
     private void initialize() {
@@ -46,6 +47,14 @@ public class MainView {
             alphabetReplaceView = loadView("AlphabetReplaceView.fxml");
         }
         contentContainer.getChildren().setAll(alphabetReplaceView);
+    }
+
+    @FXML
+    protected void searchDocumentsButtonClick() {
+        if (searchDocumentsView == null) {
+            searchDocumentsView = loadView("SearchDocumentsView.fxml");
+        }
+        contentContainer.getChildren().setAll(searchDocumentsView);
     }
 
     private Node loadView(String fxmlName) {
