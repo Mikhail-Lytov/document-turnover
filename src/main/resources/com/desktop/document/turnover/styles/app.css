@@ -342,3 +342,85 @@
     -fx-background-color: -control-border;
     -fx-background-radius: 6;
 }
+
+.alphabet-editor-root {
+    -fx-background-color: -app-bg-top;
+}
+
+.alphabet-editor-actions {
+    -fx-alignment: center-left;
+}
+
+.alphabet-editor-footer {
+    -fx-padding: 2 0 0 0;
+}
+
+.button.alphabet-editor-apply-button {
+    -fx-background-color: linear-gradient(to bottom, -accent, -accent-hover);
+    -fx-border-color: transparent;
+    -fx-font-weight: 700;
+    -fx-text-fill: -accent-text;
+}
+
+.button.alphabet-editor-apply-button:hover {
+    -fx-background-color: linear-gradient(to bottom, -accent-hover, -accent-pressed);
+}
+
+.button.alphabet-editor-apply-button:pressed {
+    -fx-background-color: -accent-pressed;
+}
+
+.table-view.alphabet-editor-table {
+    -fx-background-color: -control-bg;
+    -fx-background-radius: 10;
+    -fx-border-color: -panel-border;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.table-view.alphabet-editor-table .column-header-background {
+    -fx-background-color: -control-hover;
+    -fx-background-radius: 10 10 0 0;
+    -fx-border-color: transparent transparent -panel-border transparent;
+}
+
+.table-view.alphabet-editor-table .column-header,
+.table-view.alphabet-editor-table .filler {
+    -fx-background-color: transparent;
+    -fx-size: 36;
+}
+
+.table-view.alphabet-editor-table .column-header .label {
+    -fx-font-weight: 700;
+    -fx-text-fill: -text-main;
+}
+
+.table-view.alphabet-editor-table .table-row-cell {
+    -fx-background-color: -control-bg;
+    -fx-border-color: transparent transparent -panel-border transparent;
+    -fx-cell-size: 36;
+}
+
+.table-view.alphabet-editor-table .table-row-cell:odd {
+    -fx-background-color: -control-hover;
+}
+
+.table-view.alphabet-editor-table .table-row-cell:new-row {
+    -fx-background-color: -nav-item-hover-bg;
+}
+
+.table-view.alphabet-editor-table .table-row-cell:selected {
+    -fx-background-color: -nav-item-active-bg;
+    -fx-border-color: transparent transparent -nav-item-active-border transparent;
+}
+
+.table-view.alphabet-editor-table .table-cell {
+    -fx-border-color: transparent;
+    -fx-text-fill: -control-text;
+    -fx-padding: 0 10 0 10;
+}
+
+.text-field.alphabet-editor-cell-field {
+    -fx-background-insets: 0;
+    -fx-padding: 4 8 4 8;
+}

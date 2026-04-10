@@ -1,24 +1,32 @@
 package com.desktop.document.turnover.controller.section;
 
 import com.desktop.document.turnover.service.api.alphabet.AlphabetReplaceService;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.css.PseudoClass;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -36,6 +44,10 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class AlphabetReplaceViewController {
+
+    private static final String LIGHT_THEME_CLASS = "theme-light";
+    private static final String DARK_THEME_CLASS = "theme-dark";
+    private static final PseudoClass NEW_ROW_PSEUDO_CLASS = PseudoClass.getPseudoClass("new-row");
 
     private final AlphabetReplaceSectionHandler alphabetReplaceSectionHandler;
 
@@ -202,15 +214,11 @@ public class AlphabetReplaceViewController {
         Button cancelButton = new Button("Отмена");
 
         deleteRowButton.disableProperty().bind(table.getSelectionModel().selectedItemProperty().isNull());
+        applyButton.getStyleClass().add("alphabet-editor-apply-button");
         applyButton.setDefaultButton(true);
         cancelButton.setCancelButton(true);
 
-        addRowButton.setOnAction(event -> {
-            table.getItems().add(new ReplacementRow("", ""));
-            int lastIndex = table.getItems().size() - 1;
-            table.getSelectionModel().select(lastIndex);
-            table.scrollTo(lastIndex);
-        });
+        addRowButton.setOnAction(event -> addEmptyRowAndEdit(table));
 
         deleteRowButton.setOnAction(event -> {
             int index = table.getSelectionModel().getSelectedIndex();
@@ -218,7 +226,7 @@ public class AlphabetReplaceViewController {
                 table.getItems().remove(index);
             }
             if (table.getItems().isEmpty()) {
-                table.getItems().add(new ReplacementRow("", ""));
+                addEmptyRowAndEdit(table);
             }
         });
 
@@ -230,21 +238,27 @@ public class AlphabetReplaceViewController {
         cancelButton.setOnAction(event -> dialog.close());
 
         HBox rowActions = new HBox(8, addRowButton, deleteRowButton, importButton, saveButton, shareButton);
+        rowActions.getStyleClass().add("alphabet-editor-actions");
         HBox footer = new HBox(8, cancelButton, applyButton);
+        footer.getStyleClass().add("alphabet-editor-footer");
         footer.setAlignment(Pos.CENTER_RIGHT);
 
-        Label hintLabel = new Label("Заполняйте строки таблицы: слева что менять, справа на что менять.");
+        Label hintLabel = new Label("Заполняйте пары: слева что менять, справа на что менять. Пустая строка подсвечивается как новая.");
+        hintLabel.getStyleClass().add("section-label");
 
         VBox root = new VBox(10, hintLabel, rowActions, table, footer);
+        root.getStyleClass().addAll("app-root", "alphabet-editor-root");
         root.setPadding(new Insets(14));
 
         Scene scene = new Scene(root, 860, 560);
         Scene ownerScene = replaceDirectoryField.getScene();
         if (ownerScene != null) {
             scene.getStylesheets().addAll(ownerScene.getStylesheets());
+            inheritTheme(ownerScene, root);
         }
 
         dialog.setScene(scene);
+        Platform.runLater(() -> focusFirstEditableRow(table));
         dialog.showAndWait();
     }
 
@@ -253,15 +267,23 @@ public class AlphabetReplaceViewController {
         table.setEditable(true);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        table.getStyleClass().add("alphabet-editor-table");
+        table.setRowFactory(ignored -> new TableRow<>() {
+            @Override
+            protected void updateItem(ReplacementRow item, boolean empty) {
+                super.updateItem(item, empty);
+                pseudoClassStateChanged(NEW_ROW_PSEUDO_CLASS, !empty && item != null && item.isBlank());
+            }
+        });
 
         TableColumn<ReplacementRow, String> fromColumn = new TableColumn<>("Что менять");
         fromColumn.setCellValueFactory(cellData -> cellData.getValue().fromProperty());
-        fromColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        fromColumn.setCellFactory(column -> createAutoCommitCell());
         fromColumn.setOnEditCommit(event -> event.getRowValue().setFrom(event.getNewValue()));
 
         TableColumn<ReplacementRow, String> toColumn = new TableColumn<>("На что менять");
         toColumn.setCellValueFactory(cellData -> cellData.getValue().toProperty());
-        toColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        toColumn.setCellFactory(column -> createAutoCommitCell());
         toColumn.setOnEditCommit(event -> event.getRowValue().setTo(event.getNewValue()));
 
         table.getColumns().setAll(fromColumn, toColumn);
@@ -289,6 +311,7 @@ public class AlphabetReplaceViewController {
     }
 
     private void saveAlphabetFromTable(Stage dialog, TableView<ReplacementRow> table) {
+        commitActiveCellEdit(table);
         String tableContent = serializeRows(table.getItems());
         if (tableContent.isBlank()) {
             showWarning(dialog, "Нет корректных правил для сохранения.");
@@ -309,6 +332,7 @@ public class AlphabetReplaceViewController {
     }
 
     private void shareAlphabetFromTable(TableView<ReplacementRow> table) {
+        commitActiveCellEdit(table);
         String tableContent = serializeRows(table.getItems());
         if (tableContent.isBlank()) {
             showWarning(replaceDirectoryField.getScene() != null ? replaceDirectoryField.getScene().getWindow() : null,
@@ -325,6 +349,7 @@ public class AlphabetReplaceViewController {
     }
 
     private void applyAlphabetFromTable(Stage dialog, TableView<ReplacementRow> table) {
+        commitActiveCellEdit(table);
         String tableContent = serializeRows(table.getItems());
         if (tableContent.isBlank()) {
             showWarning(dialog, "Добавьте хотя бы одно корректное правило: слева и справа должен быть текст.");
@@ -406,6 +431,146 @@ public class AlphabetReplaceViewController {
         outputArea.setText("Ошибка: " + message);
     }
 
+    private void inheritTheme(Scene ownerScene, VBox dialogRoot) {
+        Parent ownerRoot = ownerScene.getRoot();
+        if (ownerRoot == null) {
+            return;
+        }
+
+        if (ownerRoot.getStyleClass().contains(LIGHT_THEME_CLASS)) {
+            dialogRoot.getStyleClass().add(LIGHT_THEME_CLASS);
+        } else if (ownerRoot.getStyleClass().contains(DARK_THEME_CLASS)) {
+            dialogRoot.getStyleClass().add(DARK_THEME_CLASS);
+        }
+    }
+
+    private void addEmptyRowAndEdit(TableView<ReplacementRow> table) {
+        table.getItems().add(new ReplacementRow("", ""));
+        int lastIndex = table.getItems().size() - 1;
+        table.getSelectionModel().select(lastIndex);
+        table.scrollTo(lastIndex);
+        table.edit(lastIndex, table.getColumns().get(0));
+    }
+
+    private void focusFirstEditableRow(TableView<ReplacementRow> table) {
+        if (table.getItems().isEmpty()) {
+            addEmptyRowAndEdit(table);
+            return;
+        }
+
+        int firstEmptyIndex = table.getItems().size() - 1;
+        for (int i = 0; i < table.getItems().size(); i++) {
+            if (table.getItems().get(i).isBlank()) {
+                firstEmptyIndex = i;
+                break;
+            }
+        }
+
+        table.getSelectionModel().select(firstEmptyIndex);
+        table.scrollTo(firstEmptyIndex);
+        table.edit(firstEmptyIndex, table.getColumns().get(0));
+    }
+
+    private void commitActiveCellEdit(TableView<ReplacementRow> table) {
+        if (table.getScene() != null) {
+            table.requestFocus();
+        }
+    }
+
+    private TableCell<ReplacementRow, String> createAutoCommitCell() {
+        return new TableCell<>() {
+            private final TextField editor = new TextField();
+
+            {
+                editor.getStyleClass().add("alphabet-editor-cell-field");
+                editor.setOnAction(event -> commitEdit(editor.getText()));
+                editor.focusedProperty().addListener((observable, oldValue, focusedNow) -> {
+                    if (!focusedNow) {
+                        commitEdit(editor.getText());
+                    }
+                });
+                editor.setOnKeyPressed(event -> {
+                    if (event.getCode() == KeyCode.ESCAPE) {
+                        cancelEdit();
+                        event.consume();
+                    }
+                });
+                setContentDisplay(ContentDisplay.TEXT_ONLY);
+                setOnMouseClicked(event -> {
+                    if (!isEmpty() && !isEditing() && event.getClickCount() == 1) {
+                        getTableView().edit(getIndex(), getTableColumn());
+                    }
+                });
+            }
+
+            @Override
+            public void startEdit() {
+                if (!isEditable() || !getTableView().isEditable() || !getTableColumn().isEditable()) {
+                    return;
+                }
+
+                super.startEdit();
+                editor.setText(getItem());
+                setText(null);
+                setGraphic(editor);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                Platform.runLater(() -> {
+                    editor.requestFocus();
+                    editor.selectAll();
+                });
+            }
+
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem());
+                setGraphic(null);
+                setContentDisplay(ContentDisplay.TEXT_ONLY);
+            }
+
+            @Override
+            public void commitEdit(String newValue) {
+                String committedValue = newValue == null ? "" : newValue;
+                if (!isEditing() && !committedValue.equals(getItem())) {
+                    TableView<ReplacementRow> table = getTableView();
+                    TableColumn<ReplacementRow, String> column = getTableColumn();
+                    if (table != null && column != null) {
+                        TableColumn.CellEditEvent<ReplacementRow, String> editEvent = new TableColumn.CellEditEvent<>(
+                                table,
+                                new TablePosition<>(table, getIndex(), column),
+                                TableColumn.editCommitEvent(),
+                                committedValue
+                        );
+                        Event.fireEvent(column, editEvent);
+                    }
+                }
+                super.commitEdit(committedValue);
+                setContentDisplay(ContentDisplay.TEXT_ONLY);
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                if (isEditing()) {
+                    editor.setText(item);
+                    setText(null);
+                    setGraphic(editor);
+                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                } else {
+                    setText(item);
+                    setGraphic(null);
+                    setContentDisplay(ContentDisplay.TEXT_ONLY);
+                }
+            }
+        };
+    }
+
     private static final class ReplacementRow {
         private final StringProperty from = new SimpleStringProperty("");
         private final StringProperty to = new SimpleStringProperty("");
@@ -437,6 +602,10 @@ public class AlphabetReplaceViewController {
 
         public void setTo(String value) {
             to.set(value == null ? "" : value);
+        }
+
+        public boolean isBlank() {
+            return (getFrom() == null || getFrom().isBlank()) && (getTo() == null || getTo().isBlank());
         }
     }
 }
