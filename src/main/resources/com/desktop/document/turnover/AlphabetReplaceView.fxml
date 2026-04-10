@@ -88,7 +88,7 @@
       <VBox spacing="10.0" styleClass="panel">
          <children>
             <Label styleClass="panel-title" text="Журнал выполнения" />
-            <TextArea fx:id="outputArea" disable="true" prefRowCount="14" styleClass="result-area" wrapText="true" />
+            <TextArea fx:id="outputArea" editable="false" prefRowCount="14" styleClass="result-area" wrapText="true" />
          </children>
       </VBox>
    </children>
