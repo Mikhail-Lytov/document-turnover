@@ -113,6 +113,23 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
             throw new IllegalArgumentException("Файл алфавита не содержит ни одной корректной замены в формате 'что -> на что'.");
         }
 
+        return replaceInDocuments(directory, replacements, alphabetFile.toAbsolutePath().toString());
+    }
+
+    @Override
+    public ReplaceOperationResult replaceInDocuments(Path directory, String alphabetContent) {
+        validateDirectory(directory);
+        validateAlphabetContent(alphabetContent);
+
+        List<ReplacementRule> replacements = loadReplacements(alphabetContent);
+        if (replacements.isEmpty()) {
+            throw new IllegalArgumentException("Алфавит не содержит ни одной корректной замены в формате 'что -> на что'.");
+        }
+
+        return replaceInDocuments(directory, replacements, "Встроенный редактор");
+    }
+
+    private ReplaceOperationResult replaceInDocuments(Path directory, List<ReplacementRule> replacements, String alphabetSource) {
         List<Path> files = listDocxFiles(directory);
         if (files.isEmpty()) {
             String report = "=== РЕЗУЛЬТАТ ===\nDOCX файлы не найдены в выбранной папке.";
@@ -138,7 +155,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         mainLogLines.add("Дата выполнения: " + LocalDateTime.now());
         mainLogLines.add("Путь к документам: " + directory.toAbsolutePath());
         mainLogLines.add("Бэкап создан: " + backupPath.toAbsolutePath());
-        mainLogLines.add("Файл алфавита: " + alphabetFile.toAbsolutePath());
+        mainLogLines.add("Источник алфавита: " + alphabetSource);
         mainLogLines.add("Загружено замен: " + replacements.size());
         mainLogLines.add("Найдено файлов: " + files.size());
         mainLogLines.add("");
@@ -152,7 +169,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         contextLogLines.add("Дата выполнения: " + LocalDateTime.now());
         contextLogLines.add("Путь к документам: " + directory.toAbsolutePath());
         contextLogLines.add("Бэкап создан: " + backupPath.toAbsolutePath());
-        contextLogLines.add("Файл алфавита: " + alphabetFile.toAbsolutePath());
+        contextLogLines.add("Источник алфавита: " + alphabetSource);
         contextLogLines.add("Загружено замен: " + replacements.size());
         contextLogLines.add("Найдено файлов: " + files.size());
         contextLogLines.add("");
@@ -412,15 +429,19 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     private List<ReplacementRule> loadReplacements(Path alphabetFile) {
-        List<ReplacementRule> replacements = new ArrayList<>();
-        List<String> lines;
-
         try {
-            lines = Files.readAllLines(alphabetFile, StandardCharsets.UTF_8);
+            return parseReplacements(Files.readAllLines(alphabetFile, StandardCharsets.UTF_8));
         } catch (IOException exception) {
             throw new IllegalStateException("Не удалось прочитать файл алфавита: " + safeMessage(exception), exception);
         }
+    }
 
+    private List<ReplacementRule> loadReplacements(String alphabetContent) {
+        return parseReplacements(alphabetContent.lines().toList());
+    }
+
+    private List<ReplacementRule> parseReplacements(List<String> lines) {
+        List<ReplacementRule> replacements = new ArrayList<>();
         for (String line : lines) {
             String trimmed = line.trim();
             if (trimmed.isBlank() || trimmed.startsWith("#")) {
@@ -438,7 +459,6 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                 replacements.add(new ReplacementRule(find, replace));
             }
         }
-
         return replacements;
     }
 
@@ -669,6 +689,12 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         }
         if (!Files.isRegularFile(alphabetFile)) {
             throw new IllegalArgumentException("Путь к алфавиту должен указывать на файл: " + alphabetFile);
+        }
+    }
+
+    private void validateAlphabetContent(String alphabetContent) {
+        if (alphabetContent == null || alphabetContent.isBlank()) {
+            throw new IllegalArgumentException("Алфавит замен не может быть пустым.");
         }
     }
 

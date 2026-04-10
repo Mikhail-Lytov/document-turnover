@@ -32,15 +32,15 @@
                   <Button mnemonicParsing="false" onAction="#replaceDirectorySelectedButtonClick" text="Выбрать" />
                </children>
             </HBox>
-            <Label text="Файл алфавита замен" />
+            <Label text="Алфавит замен" />
             <HBox spacing="8.0">
                <children>
-                  <TextField fx:id="alphabetFileField" maxWidth="1.7976931348623157E308" promptText="C:\\replacer\\alph.txt">
+                  <TextField fx:id="alphabetSummaryField" disable="true" editable="false" maxWidth="1.7976931348623157E308" promptText="Алфавит еще не заполнен">
                      <HBox.hgrow>
                         <Priority fx:constant="ALWAYS" />
                      </HBox.hgrow>
                   </TextField>
-                  <Button mnemonicParsing="false" onAction="#alphabetFileSelectedButtonClick" text="Выбрать" />
+                  <Button fx:id="openAlphabetEditorButton" mnemonicParsing="false" onAction="#openAlphabetEditorButtonClick" text="Открыть редактор" />
                </children>
             </HBox>
             <Button fx:id="startReplaceButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#startReplaceButtonClick" text="Запустить замену" />

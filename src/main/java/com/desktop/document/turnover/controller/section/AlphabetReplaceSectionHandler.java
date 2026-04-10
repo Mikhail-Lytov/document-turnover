@@ -3,6 +3,8 @@ package com.desktop.document.turnover.controller.section;
 import com.desktop.document.turnover.service.api.alphabet.AlphabetReplaceService;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -18,17 +22,6 @@ import java.nio.file.Path;
 public class AlphabetReplaceSectionHandler {
 
     private final AlphabetReplaceService alphabetReplaceService;
-
-    public void initReplace(TextField replaceDirectoryField, TextField alphabetFileField, Button startReplaceButton) {
-        replaceDirectoryField.textProperty().addListener((observable, oldValue, newValue) ->
-                updateReplaceButtonState(replaceDirectoryField, alphabetFileField, startReplaceButton)
-        );
-        alphabetFileField.textProperty().addListener((observable, oldValue, newValue) ->
-                updateReplaceButtonState(replaceDirectoryField, alphabetFileField, startReplaceButton)
-        );
-
-        updateReplaceButtonState(replaceDirectoryField, alphabetFileField, startReplaceButton);
-    }
 
     public void initSearch(TextField searchDirectoryField, TextField searchTextField, Button startSearchButton) {
         searchDirectoryField.textProperty().addListener((observable, oldValue, newValue) ->
@@ -51,7 +44,7 @@ public class AlphabetReplaceSectionHandler {
         }
     }
 
-    public void selectAlphabetFile(TextField targetField, Window owner) {
+    public Path selectAlphabetImportFile(Window owner) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Выберите файл алфавита замен");
         chooser.getExtensionFilters().addAll(
@@ -60,15 +53,61 @@ public class AlphabetReplaceSectionHandler {
         );
 
         File selected = chooser.showOpenDialog(owner);
-        if (selected != null) {
-            targetField.setText(selected.getAbsolutePath());
+        return selected != null ? selected.toPath() : null;
+    }
+
+    public Path selectAlphabetExportFile(Window owner) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Сохранить алфавит замен");
+        chooser.setInitialFileName("alphabet-replacements.txt");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Text files", "*.txt"),
+                new FileChooser.ExtensionFilter("All files", "*.*")
+        );
+
+        File selected = chooser.showSaveDialog(owner);
+        return selected != null ? selected.toPath() : null;
+    }
+
+    public String importAlphabet(Path alphabetFile) {
+        Path path = parseFile(alphabetFile != null ? alphabetFile.toString() : null, "Файл алфавита замен");
+        try {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Не удалось прочитать файл алфавита: " + exception.getMessage(), exception);
         }
     }
 
-    public AlphabetReplaceService.ReplaceOperationResult replace(String directoryPath, String alphabetFilePath) {
+    public Path saveAlphabet(Path targetFile, String alphabetContent) {
+        if (targetFile == null) {
+            throw new IllegalArgumentException("Не выбран файл для сохранения алфавита.");
+        }
+
+        String normalizedContent = normalizeAlphabetContent(alphabetContent);
+        Path output = ensureTxtExtension(targetFile);
+        Path parent = output.getParent();
+        try {
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+            Files.writeString(output, normalizedContent, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Не удалось сохранить алфавит: " + exception.getMessage(), exception);
+        }
+        return output;
+    }
+
+    public void copyAlphabetToClipboard(String alphabetContent) {
+        String normalizedContent = normalizeAlphabetContent(alphabetContent);
+        ClipboardContent content = new ClipboardContent();
+        content.putString(normalizedContent);
+        Clipboard.getSystemClipboard().setContent(content);
+    }
+
+    public AlphabetReplaceService.ReplaceOperationResult replace(String directoryPath, String alphabetContent) {
         Path directory = parseDirectory(directoryPath, "Папка с документами");
-        Path alphabetFile = parseFile(alphabetFilePath, "Файл алфавита замен");
-        return alphabetReplaceService.replaceInDocuments(directory, alphabetFile);
+        String normalizedAlphabetContent = normalizeAlphabetContent(alphabetContent);
+        return alphabetReplaceService.replaceInDocuments(directory, normalizedAlphabetContent);
     }
 
     public AlphabetReplaceService.SearchOperationResult search(String directoryPath, String searchText) {
@@ -116,9 +155,19 @@ public class AlphabetReplaceSectionHandler {
         return searchText.trim();
     }
 
-    private void updateReplaceButtonState(TextField replaceDirectoryField, TextField alphabetFileField, Button startReplaceButton) {
-        boolean disabled = replaceDirectoryField.getText().isBlank() || alphabetFileField.getText().isBlank();
-        startReplaceButton.setDisable(disabled);
+    private String normalizeAlphabetContent(String alphabetContent) {
+        if (alphabetContent == null || alphabetContent.isBlank()) {
+            throw new IllegalArgumentException("Алфавит замен не может быть пустым.");
+        }
+        return alphabetContent.replace("\r\n", "\n").trim();
+    }
+
+    private Path ensureTxtExtension(Path path) {
+        String fileName = path.getFileName().toString();
+        if (fileName.toLowerCase().endsWith(".txt")) {
+            return path;
+        }
+        return path.resolveSibling(fileName + ".txt");
     }
 
     private void updateSearchButtonState(TextField searchDirectoryField, TextField searchTextField, Button startSearchButton) {

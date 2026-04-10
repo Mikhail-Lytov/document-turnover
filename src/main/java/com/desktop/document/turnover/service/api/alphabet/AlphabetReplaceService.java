@@ -9,6 +9,8 @@ public interface AlphabetReplaceService {
 
     ReplaceOperationResult replaceInDocuments(Path directory, Path alphabetFile);
 
+    ReplaceOperationResult replaceInDocuments(Path directory, String alphabetContent);
+
     record ReplacementRule(String find, String replace) {
     }
 
