@@ -137,16 +137,19 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         }
 
         List<String> errors = new ArrayList<>();
-        Path backupPath = createUniqueBackupPath(directory);
+        Path backupRootPath = createUniqueBackupPath(directory);
+        Path backupPath = backupRootPath.resolve("old_file");
+        Path logsPath = backupRootPath.resolve("logs");
         try {
             copyDirectory(directory, backupPath);
+            Files.createDirectories(logsPath);
         } catch (IOException exception) {
             throw new IllegalStateException("Не удалось создать бэкап папки: " + safeMessage(exception), exception);
         }
 
         String timestamp = LocalDateTime.now().format(LOG_TS_FORMAT);
-        Path logFile = backupPath.resolve("replacements_log_" + timestamp + ".txt");
-        Path contextLogFile = backupPath.resolve("context_log_" + timestamp + ".txt");
+        Path logFile = logsPath.resolve("replacements_log_" + timestamp + ".txt");
+        Path contextLogFile = logsPath.resolve("context_log_" + timestamp + ".txt");
 
         List<String> mainLogLines = new ArrayList<>();
         List<String> contextLogLines = new ArrayList<>();
@@ -480,13 +483,12 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     private Path createUniqueBackupPath(Path directory) {
-        String folderName = directory.getFileName().toString();
         Path parent = directory.getParent();
         if (parent == null) {
             throw new IllegalArgumentException("Не удалось определить родительскую папку для: " + directory);
         }
 
-        String baseBackupName = folderName + "backup";
+        String baseBackupName = "backup";
         Path backupPath = parent.resolve(baseBackupName);
 
         if (!Files.exists(backupPath)) {
