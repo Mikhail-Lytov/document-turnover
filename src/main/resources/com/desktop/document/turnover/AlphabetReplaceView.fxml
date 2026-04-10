@@ -6,9 +6,11 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox spacing="16.0" styleClass="converter-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.desktop.document.turnover.controller.section.AlphabetReplaceViewController">
@@ -43,21 +45,33 @@
             </HBox>
             <Button fx:id="startReplaceButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#startReplaceButtonClick" text="Запустить замену" />
             <Separator />
-            <GridPane hgap="8.0" vgap="8.0">
+            <GridPane hgap="8.0" prefHeight="154.0" prefWidth="512.0" vgap="8.0">
                <children>
                   <Label text="Файлов обработано" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                  <TextField fx:id="replaceFilesCountField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  <TextField fx:id="replaceFilesCountField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                   <Label text="Загружено замен" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                  <TextField fx:id="replaceRulesCountField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <TextField fx:id="replaceRulesCountField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                   <Label text="Всего замен" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                  <TextField fx:id="replaceTotalCountField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <TextField fx:id="replaceTotalCountField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                   <Label text="Путь к бэкапу" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                  <TextField fx:id="backupPathField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  <TextField fx:id="backupPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                   <Label text="Основной лог" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                  <TextField fx:id="logPathField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                  <TextField fx:id="logPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                   <Label text="Лог контекстов" GridPane.columnIndex="0" GridPane.rowIndex="5" />
-                  <TextField fx:id="contextLogPathField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                  <TextField fx:id="contextLogPathField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                </children>
+               <columnConstraints>
+                  <ColumnConstraints />
+                  <ColumnConstraints />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints />
+                  <RowConstraints />
+                  <RowConstraints />
+                  <RowConstraints />
+                  <RowConstraints />
+                  <RowConstraints />
+               </rowConstraints>
             </GridPane>
          </children>
       </VBox>
@@ -65,7 +79,7 @@
       <VBox spacing="10.0" styleClass="panel">
          <children>
             <Label styleClass="panel-title" text="Журнал выполнения" />
-            <TextArea fx:id="outputArea" prefRowCount="14" styleClass="result-area" wrapText="true" />
+            <TextArea fx:id="outputArea" disable="true" prefRowCount="14" styleClass="result-area" wrapText="true" />
          </children>
       </VBox>
    </children>

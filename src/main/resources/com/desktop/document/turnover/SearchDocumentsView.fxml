@@ -6,9 +6,11 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox spacing="16.0" styleClass="converter-root" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.desktop.document.turnover.controller.section.SearchDocumentsViewController">
@@ -37,10 +39,18 @@
             <GridPane hgap="8.0" vgap="8.0">
                <children>
                   <Label text="Файлов проверено" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                  <TextField fx:id="searchFilesCountField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  <TextField fx:id="searchFilesCountField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                   <Label text="Совпадений найдено" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                  <TextField fx:id="searchMatchesCountField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <TextField fx:id="searchMatchesCountField" disable="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                </children>
+               <columnConstraints>
+                  <ColumnConstraints />
+                  <ColumnConstraints />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints />
+                  <RowConstraints />
+               </rowConstraints>
             </GridPane>
          </children>
       </VBox>
@@ -48,7 +58,7 @@
       <VBox spacing="10.0" styleClass="panel">
          <children>
             <Label styleClass="panel-title" text="Журнал выполнения" />
-            <TextArea fx:id="outputArea" prefRowCount="14" styleClass="result-area" wrapText="true" />
+            <TextArea fx:id="outputArea" disable="true" prefRowCount="14" styleClass="result-area" wrapText="true" />
          </children>
       </VBox>
    </children>
