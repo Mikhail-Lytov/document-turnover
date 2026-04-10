@@ -18,7 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Optional;
 
 @Component
@@ -91,6 +94,40 @@ public class ConverterSectionHandler {
         newVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
     }
 
+    public void openInFileManager(String pathValue, String fieldName) {
+        Path path = parseExistingPath(pathValue, fieldName).toAbsolutePath().normalize();
+        boolean isDirectory = Files.isDirectory(path);
+        String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+
+        try {
+            if (osName.contains("win")) {
+                if (isDirectory) {
+                    new ProcessBuilder("explorer", path.toString()).start();
+                } else {
+                    new ProcessBuilder("explorer", "/select," + path).start();
+                }
+                return;
+            }
+
+            if (osName.contains("mac")) {
+                if (isDirectory) {
+                    new ProcessBuilder("open", path.toString()).start();
+                } else {
+                    new ProcessBuilder("open", "-R", path.toString()).start();
+                }
+                return;
+            }
+
+            Path target = isDirectory ? path : path.getParent();
+            if (target == null) {
+                throw new IllegalArgumentException("Не удалось определить папку для открытия: " + path);
+            }
+            new ProcessBuilder("xdg-open", target.toString()).start();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Не удалось открыть путь в файловом менеджере: " + exception.getMessage(), exception);
+        }
+    }
+
     private void initTypeFrom(MenuButton typeFrom, Button startConverterButton, TextField tfDirectory) {
         GenerateMenuButton.generateMenuButton(typeFrom, TypeFromDocs.class, selected -> {
             typeFrom.setText(selected.name());
@@ -114,5 +151,18 @@ public class ConverterSectionHandler {
 
         boolean directoryIsBlank = tfDirectory == null || tfDirectory.getText().isBlank();
         startConverterButton.setDisable(selectedTypeFrom == null || selectedTypeTo == null || directoryIsBlank);
+    }
+
+    private Path parseExistingPath(String pathValue, String fieldName) {
+        if (pathValue == null || pathValue.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " не указан.");
+        }
+
+        Path path = Path.of(pathValue.trim());
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Путь не существует: " + path);
+        }
+
+        return path;
     }
 }
