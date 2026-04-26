@@ -88,6 +88,12 @@ public class ConverterSectionHandler {
             return;
         }
 
+        clear(
+                allFilesInformationParser,
+                goodConverterInformationParser,
+                oldVersionPathInformationParser,
+                newVersionPathInformationParser
+        );
         Path selectedDirectory = Path.of(tfDirectory.getText());
         ConverterService converterService = converterStrategy.getConverterService(selectedTypeFrom);
 
@@ -317,5 +323,17 @@ public class ConverterSectionHandler {
         }
 
         return null;
+    }
+
+    private void clear(
+            TextField allFilesInformationParser,
+            TextField goodConverterInformationParser,
+            TextField oldVersionPathInformationParser,
+            TextField newVersionPathInformationParser
+    ) {
+        allFilesInformationParser.clear();
+        goodConverterInformationParser.clear();
+        oldVersionPathInformationParser.clear();
+        newVersionPathInformationParser.clear();
     }
 }
