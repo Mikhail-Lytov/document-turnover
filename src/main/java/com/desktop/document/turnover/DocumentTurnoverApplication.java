@@ -47,7 +47,7 @@ public class DocumentTurnoverApplication extends Application {
         scene.getStylesheets().add(
                 DocumentTurnoverApplication.class.getResource("styles/app.css").toExternalForm()
         );
-        stage.setTitle("Имя программы"); //TODO: доделать имя
+        stage.setTitle("Lylomate Edtor"); //TODO: доделать имя
         stage.setScene(scene);
         stage.setMinWidth(800);
         stage.setMinHeight(715);
