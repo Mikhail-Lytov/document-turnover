@@ -77,33 +77,22 @@ public class ConverterSectionHandler {
         }
     }
 
-    public void convert(
-            TextField tfDirectory,
-            TextField allFilesInformationParser,
-            TextField goodConverterInformationParser,
-            TextField oldVersionPathInformationParser,
-            TextField newVersionPathInformationParser
-    ) {
-        if (selectedTypeFrom == null || selectedTypeTo == null || tfDirectory.getText().isBlank()) {
-            return;
+    public ConversionResult convert(String directoryPath) {
+        if (selectedTypeFrom == null || selectedTypeTo == null) {
+            throw new IllegalStateException("Не выбран тип входного или выходного формата.");
+        }
+        if (directoryPath == null || directoryPath.isBlank()) {
+            throw new IllegalArgumentException("Не выбрана папка для конвертации.");
         }
 
-        clear(
-                allFilesInformationParser,
-                goodConverterInformationParser,
-                oldVersionPathInformationParser,
-                newVersionPathInformationParser
-        );
-        Path selectedDirectory = Path.of(tfDirectory.getText());
+        Path selectedDirectory = Path.of(directoryPath.trim());
         ConverterService converterService = converterStrategy.getConverterService(selectedTypeFrom);
 
         int allFiles = converterService.getFilesCountByType(selectedDirectory, selectedTypeFrom);
         int convertedFiles = converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo);
+        String absolutePath = selectedDirectory.toAbsolutePath().toString();
 
-        allFilesInformationParser.setText(String.valueOf(allFiles));
-        goodConverterInformationParser.setText(String.valueOf(convertedFiles));
-        oldVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
-        newVersionPathInformationParser.setText(selectedDirectory.toAbsolutePath().toString());
+        return new ConversionResult(allFiles, convertedFiles, absolutePath, absolutePath);
     }
 
     public void openInFileManager(String pathValue, String fieldName) {
@@ -325,15 +314,6 @@ public class ConverterSectionHandler {
         return null;
     }
 
-    private void clear(
-            TextField allFilesInformationParser,
-            TextField goodConverterInformationParser,
-            TextField oldVersionPathInformationParser,
-            TextField newVersionPathInformationParser
-    ) {
-        allFilesInformationParser.clear();
-        goodConverterInformationParser.clear();
-        oldVersionPathInformationParser.clear();
-        newVersionPathInformationParser.clear();
+    public record ConversionResult(int allFiles, int convertedFiles, String backupPath, String convertedPath) {
     }
 }
