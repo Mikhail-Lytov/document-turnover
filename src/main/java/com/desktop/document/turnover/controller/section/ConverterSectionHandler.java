@@ -12,6 +12,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
@@ -32,8 +34,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -42,13 +47,21 @@ public class ConverterSectionHandler {
     private static final String APP_STYLESHEET_PATH = "/com/desktop/document/turnover/styles/app.css";
     private static final String LIGHT_THEME_CLASS = "theme-light";
     private static final String DARK_THEME_CLASS = "theme-dark";
+    private static final String TYPE_FROM_DEFAULT_TEXT = "формата";
+    private static final String TYPE_FROM_MULTIPLE_TEXT = "Выбрано: %d";
+    private static final String TYPE_FROM_MENU_STYLE_CLASS = "converter-type-from-menu";
+    private static final String TYPE_FROM_MENU_ITEM_STYLE_CLASS = "converter-type-menu-item";
+    private static final String TYPE_FROM_CHECKBOX_STYLE_CLASS = "converter-type-check";
 
     private final ConverterStrategy converterStrategy;
-    private TypeFromDocs selectedTypeFrom;
+    private final Set<TypeFromDocs> selectedTypesFrom = EnumSet.noneOf(TypeFromDocs.class);
     private TypeToDocs selectedTypeTo;
     private ResourcesSystemType selectedResourceType = ResourcesSystemType.DIRECTORY;
 
     public void init(MenuButton typeFrom, MenuButton typeTo, Button startConverterButton, TextField tfDirectory) {
+        if (!typeFrom.getStyleClass().contains(TYPE_FROM_MENU_STYLE_CLASS)) {
+            typeFrom.getStyleClass().add(TYPE_FROM_MENU_STYLE_CLASS);
+        }
         initTypeFrom(typeFrom, startConverterButton, tfDirectory);
         initTypeTo(typeTo, startConverterButton, tfDirectory);
         updateStartConverterButtonState(startConverterButton, tfDirectory);
@@ -78,18 +91,27 @@ public class ConverterSectionHandler {
     }
 
     public ConversionResult convert(String directoryPath) {
-        if (selectedTypeFrom == null || selectedTypeTo == null) {
-            throw new IllegalStateException("Не выбран тип входного или выходного формата.");
+        if (selectedTypesFrom.isEmpty() || selectedTypeTo == null) {
+            throw new IllegalStateException("Не выбраны входные форматы или выходной формат.");
         }
         if (directoryPath == null || directoryPath.isBlank()) {
             throw new IllegalArgumentException("Не выбрана папка для конвертации.");
         }
 
         Path selectedDirectory = Path.of(directoryPath.trim());
-        ConverterService converterService = converterStrategy.getConverterService(selectedTypeFrom);
+        int allFiles = 0;
+        int convertedFiles = 0;
 
-        int allFiles = converterService.getFilesCountByType(selectedDirectory, selectedTypeFrom);
-        int convertedFiles = converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo);
+        for (TypeFromDocs selectedTypeFrom : selectedTypesFrom) {
+            ConverterService converterService = converterStrategy.getConverterService(selectedTypeFrom);
+            if (converterService == null) {
+                throw new IllegalStateException("Не найден конвертер для формата: " + selectedTypeFrom.name());
+            }
+
+            allFiles += converterService.getFilesCountByType(selectedDirectory, selectedTypeFrom);
+            convertedFiles += converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo);
+        }
+
         String absolutePath = selectedDirectory.toAbsolutePath().toString();
 
         return new ConversionResult(allFiles, convertedFiles, absolutePath, absolutePath);
@@ -130,11 +152,31 @@ public class ConverterSectionHandler {
     }
 
     private void initTypeFrom(MenuButton typeFrom, Button startConverterButton, TextField tfDirectory) {
-        GenerateMenuButton.generateMenuButton(typeFrom, TypeFromDocs.class, selected -> {
-            typeFrom.setText(selected.name());
-            selectedTypeFrom = selected;
-            updateStartConverterButtonState(startConverterButton, tfDirectory);
-        });
+        typeFrom.getItems().clear();
+        for (TypeFromDocs value : TypeFromDocs.values()) {
+            CheckBox checkBox = new CheckBox(value.name());
+            checkBox.getStyleClass().add(TYPE_FROM_CHECKBOX_STYLE_CLASS);
+            checkBox.setSelected(selectedTypesFrom.contains(value));
+            checkBox.setFocusTraversable(false);
+
+            checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue) {
+                    selectedTypesFrom.add(value);
+                } else {
+                    selectedTypesFrom.remove(value);
+                }
+
+                updateTypeFromButtonText(typeFrom);
+                updateStartConverterButtonState(startConverterButton, tfDirectory);
+            });
+
+            CustomMenuItem item = new CustomMenuItem(checkBox);
+            item.getStyleClass().add(TYPE_FROM_MENU_ITEM_STYLE_CLASS);
+            item.setHideOnClick(false);
+            typeFrom.getItems().add(item);
+        }
+
+        updateTypeFromButtonText(typeFrom);
     }
 
     private void initTypeTo(MenuButton typeTo, Button startConverterButton, TextField tfDirectory) {
@@ -151,7 +193,24 @@ public class ConverterSectionHandler {
         }
 
         boolean directoryIsBlank = tfDirectory == null || tfDirectory.getText().isBlank();
-        startConverterButton.setDisable(selectedTypeFrom == null || selectedTypeTo == null || directoryIsBlank);
+        startConverterButton.setDisable(selectedTypesFrom.isEmpty() || selectedTypeTo == null || directoryIsBlank);
+    }
+
+    private void updateTypeFromButtonText(MenuButton typeFrom) {
+        if (selectedTypesFrom.isEmpty()) {
+            typeFrom.setText(TYPE_FROM_DEFAULT_TEXT);
+            return;
+        }
+
+        if (selectedTypesFrom.size() > 2) {
+            typeFrom.setText(TYPE_FROM_MULTIPLE_TEXT.formatted(selectedTypesFrom.size()));
+            return;
+        }
+
+        String selectedValue = selectedTypesFrom.stream()
+                .map(TypeFromDocs::name)
+                .collect(Collectors.joining(", "));
+        typeFrom.setText(selectedValue);
     }
 
     private Path parseExistingPath(String pathValue, String fieldName) {

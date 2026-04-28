@@ -14,7 +14,8 @@ public enum TypeFromDocs {
 
     RTF("rtf", 6),
 
-    EXCEL("XLSX", 61);
+    EXCEL("XLSX", 61),
+    PUB("PUB", 1);
 
     @Getter
     private final String name;

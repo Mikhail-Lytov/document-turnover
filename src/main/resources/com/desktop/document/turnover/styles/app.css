@@ -25,6 +25,9 @@
     -control-focus: #5b95ff;
     -control-text: #121f33;
     -control-disabled-bg: #f1f5fb;
+    -converter-type-check-bg: #ffffff;
+    -converter-type-check-border: #c3d1e7;
+    -converter-type-check-hover: #eef4ff;
 
     -accent: #317cf5;
     -accent-hover: #226de4;
@@ -64,6 +67,9 @@
     -control-focus: #5e96ff;
     -control-text: #132036;
     -control-disabled-bg: #f2f6fc;
+    -converter-type-check-bg: #ffffff;
+    -converter-type-check-border: #c3d1e7;
+    -converter-type-check-hover: #eef4ff;
 
     -accent: #2f79f2;
     -accent-hover: #226ade;
@@ -98,6 +104,9 @@
     -control-focus: #629bff;
     -control-text: #e9edf6;
     -control-disabled-bg: #242832;
+    -converter-type-check-bg: #2f3542;
+    -converter-type-check-border: #5c6479;
+    -converter-type-check-hover: #394151;
 
     -accent: #4d8fff;
     -accent-hover: #3a7eea;
@@ -308,6 +317,11 @@
     -fx-background-color: -text-main;
 }
 
+.menu-button.converter-type-from-menu > .label {
+    -fx-font-weight: 700;
+    -fx-text-fill: -control-text;
+}
+
 .text-area .content {
     -fx-background-color: -control-bg;
     -fx-background-radius: 8;
@@ -370,6 +384,41 @@
 
 .menu-item:focused {
     -fx-background-color: -nav-item-hover-bg;
+}
+
+.context-menu .converter-type-menu-item {
+    -fx-padding: 4 10 4 10;
+}
+
+.context-menu .converter-type-menu-item:focused,
+.context-menu .converter-type-menu-item:hover {
+    -fx-background-color: -nav-item-hover-bg;
+}
+
+.context-menu .converter-type-check .text {
+    -fx-fill: -control-text;
+}
+
+.context-menu .converter-type-check > .box {
+    -fx-background-color: -converter-type-check-bg;
+    -fx-background-radius: 5;
+    -fx-border-color: -converter-type-check-border;
+    -fx-border-radius: 5;
+    -fx-border-width: 1;
+}
+
+.context-menu .converter-type-check:hover > .box,
+.context-menu .converter-type-check:armed > .box {
+    -fx-background-color: -converter-type-check-hover;
+}
+
+.context-menu .converter-type-check:selected > .box {
+    -fx-background-color: -accent;
+    -fx-border-color: -accent;
+}
+
+.context-menu .converter-type-check:selected > .box > .mark {
+    -fx-background-color: -accent-text;
 }
 
 .scroll-bar:vertical .track,
