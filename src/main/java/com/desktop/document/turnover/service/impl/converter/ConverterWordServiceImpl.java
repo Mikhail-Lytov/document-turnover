@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntConsumer;
 
 @Service
 @RequiredArgsConstructor
@@ -29,18 +30,24 @@ public class ConverterWordServiceImpl implements ConverterService {
 
     @Override
     public int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType) {
-        defaultValidate(directory, sourceType, targetType);
+        return convertDirectory(directory, sourceType, targetType, null);
+    }
 
-        if (Objects.equals(sourceType.getName(), targetType.getName())) {
-            return 0;
-        }
+    @Override
+    public int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType, IntConsumer processedFilesConsumer) {
+        defaultValidate(directory, sourceType, targetType);
 
         List<Path> filesToConvert = findFilesByExtension(directory, sourceType.getName());
         if (filesToConvert.isEmpty()) {
             return 0;
         }
 
-        return convertWithWord(filesToConvert, targetType);
+        if (Objects.equals(sourceType.getName(), targetType.getName())) {
+            notifyProcessedFiles(processedFilesConsumer, filesToConvert.size());
+            return 0;
+        }
+
+        return convertWithWord(filesToConvert, targetType, processedFilesConsumer);
     }
 
     @Override
@@ -53,7 +60,7 @@ public class ConverterWordServiceImpl implements ConverterService {
         );
     }
 
-    private int convertWithWord(List<Path> sourceFiles, TypeToDocs targetType) {
+    private int convertWithWord(List<Path> sourceFiles, TypeToDocs targetType, IntConsumer processedFilesConsumer) {
         ComThread.InitSTA();
         ActiveXComponent word = null;
         Dispatch documents = null;
@@ -86,6 +93,7 @@ public class ConverterWordServiceImpl implements ConverterService {
                 } catch (Exception ignored) {
                     // Continue converting other files even if one file fails.
                 } finally {
+                    notifyProcessedFiles(processedFilesConsumer, 1);
                     if (openedDocument != null) {
                         Dispatch.call(openedDocument, "Close", false);
                     }
@@ -106,6 +114,12 @@ public class ConverterWordServiceImpl implements ConverterService {
         int extensionPosition = fileName.lastIndexOf('.');
         String baseName = extensionPosition > 0 ? fileName.substring(0, extensionPosition) : fileName;
         return sourcePath.getParent().resolve(baseName + "." + targetType.getName());
+    }
+
+    private void notifyProcessedFiles(IntConsumer processedFilesConsumer, int processedFiles) {
+        if (processedFilesConsumer != null && processedFiles > 0) {
+            processedFilesConsumer.accept(processedFiles);
+        }
     }
 
 }

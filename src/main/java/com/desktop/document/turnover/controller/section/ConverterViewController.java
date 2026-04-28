@@ -12,12 +12,12 @@ import javafx.stage.Window;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
-
 @Component
 @RequiredArgsConstructor
 public class ConverterViewController {
+
+    private static final String CONVERSION_PROGRESS_DEFAULT_TEXT = "Идет конвертация...";
+    private static final String CONVERSION_PROGRESS_TEXT_TEMPLATE = "Идет конвертация... %d%%";
 
     private final ConverterSectionHandler converterSectionHandler;
 
@@ -84,11 +84,7 @@ public class ConverterViewController {
     protected void startConverterButtonClick() {
         clearConversionResultFields();
         updateOpenPathButtonsState();
-        runTask(
-                () -> converterSectionHandler.convert(tfDirectory.getText()),
-                this::applyConversionResult,
-                "конвертацию"
-        );
+        runConversionTask();
     }
 
     @FXML
@@ -114,27 +110,53 @@ public class ConverterViewController {
         openConvertedPathButton.setDisable(newVersionPathInformationParser.getText() == null || newVersionPathInformationParser.getText().isBlank());
     }
 
-    private <T> void runTask(Callable<T> action, Consumer<T> onSuccess, String actionName) {
+    private void runConversionTask() {
         setConversionInProgress(true);
 
-        Task<T> task = new Task<>() {
+        Task<ConverterSectionHandler.ConversionResult> task = new Task<>() {
             @Override
-            protected T call() throws Exception {
-                return action.call();
+            protected ConverterSectionHandler.ConversionResult call() {
+                updateProgress(0, 1);
+                updateMessage(formatProgressMessage(0));
+
+                ConverterSectionHandler.ConversionResult result = converterSectionHandler.convert(
+                        tfDirectory.getText(),
+                        (processedFiles, totalFiles) -> {
+                            if (totalFiles <= 0) {
+                                updateProgress(1, 1);
+                                updateMessage(formatProgressMessage(100));
+                                return;
+                            }
+
+                            int boundedProcessedFiles = Math.min(totalFiles, Math.max(0, processedFiles));
+                            int progressPercent = (int) Math.round((boundedProcessedFiles * 100.0) / totalFiles);
+                            updateProgress(boundedProcessedFiles, totalFiles);
+                            updateMessage(formatProgressMessage(progressPercent));
+                        }
+                );
+
+                updateProgress(1, 1);
+                updateMessage(formatProgressMessage(100));
+                return result;
             }
         };
 
+        converterProgressIndicator.progressProperty().bind(task.progressProperty());
+        converterProgressLabel.textProperty().bind(task.messageProperty());
+
         task.setOnSucceeded(event -> {
+            unbindProgressState();
             setConversionInProgress(false);
-            onSuccess.accept(task.getValue());
+            applyConversionResult(task.getValue());
         });
 
         task.setOnFailed(event -> {
+            unbindProgressState();
             setConversionInProgress(false);
-            showError(actionName, task.getException());
+            showError("конвертацию", task.getException());
         });
 
-        Thread worker = new Thread(task, "converter-" + actionName);
+        Thread worker = new Thread(task, "converter-conversion");
         worker.setDaemon(true);
         worker.start();
     }
@@ -161,6 +183,8 @@ public class ConverterViewController {
             typeFromDisabledBeforeConversion = typeFrom.isDisable();
             typeToDisabledBeforeConversion = typeTo.isDisable();
             tfDirectoryDisabledBeforeConversion = tfDirectory.isDisable();
+            converterProgressIndicator.setProgress(0);
+            converterProgressLabel.setText(formatProgressMessage(0));
         }
 
         startConverterButton.setDisable(inProgress || startConverterButtonDisabledBeforeConversion);
@@ -172,6 +196,17 @@ public class ConverterViewController {
         converterProgressIndicator.setManaged(inProgress);
         converterProgressLabel.setVisible(inProgress);
         converterProgressLabel.setManaged(inProgress);
+    }
+
+    private void unbindProgressState() {
+        converterProgressIndicator.progressProperty().unbind();
+        converterProgressLabel.textProperty().unbind();
+        converterProgressLabel.setText(CONVERSION_PROGRESS_DEFAULT_TEXT);
+    }
+
+    private String formatProgressMessage(int progressPercent) {
+        int boundedPercent = Math.min(100, Math.max(0, progressPercent));
+        return CONVERSION_PROGRESS_TEXT_TEMPLATE.formatted(boundedPercent);
     }
 
     private void showError(String actionName, Throwable throwable) {

@@ -34,10 +34,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Component
@@ -91,6 +94,10 @@ public class ConverterSectionHandler {
     }
 
     public ConversionResult convert(String directoryPath) {
+        return convert(directoryPath, null);
+    }
+
+    public ConversionResult convert(String directoryPath, BiConsumer<Integer, Integer> progressCallback) {
         if (selectedTypesFrom.isEmpty() || selectedTypeTo == null) {
             throw new IllegalStateException("Не выбраны входные форматы или выходной формат.");
         }
@@ -100,7 +107,7 @@ public class ConverterSectionHandler {
 
         Path selectedDirectory = Path.of(directoryPath.trim());
         int allFiles = 0;
-        int convertedFiles = 0;
+        Map<TypeFromDocs, ConverterService> convertersByType = new EnumMap<>(TypeFromDocs.class);
 
         for (TypeFromDocs selectedTypeFrom : selectedTypesFrom) {
             ConverterService converterService = converterStrategy.getConverterService(selectedTypeFrom);
@@ -108,13 +115,41 @@ public class ConverterSectionHandler {
                 throw new IllegalStateException("Не найден конвертер для формата: " + selectedTypeFrom.name());
             }
 
+            convertersByType.put(selectedTypeFrom, converterService);
             allFiles += converterService.getFilesCountByType(selectedDirectory, selectedTypeFrom);
-            convertedFiles += converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo);
+        }
+
+        notifyProgress(progressCallback, 0, allFiles);
+
+        int convertedFiles = 0;
+        final int totalFiles = allFiles;
+        int[] processedFiles = {0};
+
+        for (TypeFromDocs selectedTypeFrom : selectedTypesFrom) {
+            ConverterService converterService = convertersByType.get(selectedTypeFrom);
+            convertedFiles += converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo, processedFilesDelta -> {
+                if (processedFilesDelta <= 0) {
+                    return;
+                }
+
+                processedFiles[0] = Math.min(totalFiles, processedFiles[0] + processedFilesDelta);
+                notifyProgress(progressCallback, processedFiles[0], totalFiles);
+            });
+        }
+
+        if (totalFiles > 0 && processedFiles[0] < totalFiles) {
+            notifyProgress(progressCallback, totalFiles, totalFiles);
         }
 
         String absolutePath = selectedDirectory.toAbsolutePath().toString();
 
         return new ConversionResult(allFiles, convertedFiles, absolutePath, absolutePath);
+    }
+
+    private void notifyProgress(BiConsumer<Integer, Integer> progressCallback, int processedFiles, int totalFiles) {
+        if (progressCallback != null) {
+            progressCallback.accept(processedFiles, totalFiles);
+        }
     }
 
     public void openInFileManager(String pathValue, String fieldName) {

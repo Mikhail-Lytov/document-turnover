@@ -8,6 +8,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,6 +17,10 @@ public interface ConverterService {
     int getFilesCountByType(Path directory, TypeFromDocs sourceType);
 
     int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType);
+
+    default int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType, IntConsumer processedFilesConsumer) {
+        return convertDirectory(directory, sourceType, targetType);
+    }
 
     List<TypeFromDocs> getTypes();
 
