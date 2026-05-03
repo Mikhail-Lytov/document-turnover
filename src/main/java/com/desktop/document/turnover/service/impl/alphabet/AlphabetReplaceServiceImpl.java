@@ -40,9 +40,9 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         validateDirectory(directory);
         validateSearchText(searchText);
 
-        List<Path> files = listDocxFiles(directory);
+        List<Path> files = listWordFiles(directory);
         if (files.isEmpty()) {
-            String report = "=== РЕЗУЛЬТАТЫ ПОИСКА ===\nDOCX файлы не найдены в выбранной папке.";
+            String report = "=== РЕЗУЛЬТАТЫ ПОИСКА ===\nDOC/DOCX файлы не найдены в выбранной папке.";
             return new SearchOperationResult(0, 0, List.of(), List.of(), report);
         }
 
@@ -130,9 +130,9 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     private ReplaceOperationResult replaceInDocuments(Path directory, List<ReplacementRule> replacements, String alphabetSource) {
-        List<Path> files = listDocxFiles(directory);
+        List<Path> files = listWordFiles(directory);
         if (files.isEmpty()) {
-            String report = "=== РЕЗУЛЬТАТ ===\nDOCX файлы не найдены в выбранной папке.";
+            String report = "=== РЕЗУЛЬТАТ ===\nDOC/DOCX файлы не найдены в выбранной папке.";
             return new ReplaceOperationResult(0, 0, replacements.size(), directory, directory, null, null, List.of(), report);
         }
 
@@ -465,11 +465,11 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         return replacements;
     }
 
-    private List<Path> listDocxFiles(Path directory) {
+    private List<Path> listWordFiles(Path directory) {
         try (Stream<Path> files = Files.list(directory)) {
             return files
                     .filter(Files::isRegularFile)
-                    .filter(this::isDocx)
+                    .filter(this::isWordDocument)
                     .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
                     .toList();
         } catch (IOException exception) {
@@ -477,9 +477,9 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         }
     }
 
-    private boolean isDocx(Path path) {
+    private boolean isWordDocument(Path path) {
         String name = path.getFileName().toString().toLowerCase();
-        return name.endsWith(".docx");
+        return name.endsWith(".docx") || name.endsWith(".doc");
     }
 
     private Path createUniqueBackupPath(Path directory) {
