@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -34,6 +35,9 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     private static final int WD_FIND_STOP = 0;
     private static final int WD_COLLAPSE_END = 0;
     private static final int WD_ACTIVE_END_PAGE_NUMBER = 3;
+    private static final int WORD_FIND_TEXT_LIMIT = 255;
+    private static final int CONTEXT_BEFORE_CHARS = 30;
+    private static final int CONTEXT_AFTER_CHARS = 40;
 
     @Override
     public SearchOperationResult searchInDocuments(Path directory, String searchText) {
@@ -66,18 +70,23 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                     Dispatch selection = word.getProperty("Selection").toDispatch();
                     resetSelectionToStart(selection);
 
-                    Dispatch find = Dispatch.get(selection, "Find").toDispatch();
-                    configureFind(find, searchText, false);
-
                     int fileMatches = 0;
                     List<Integer> pages = new ArrayList<>();
+                    if (canUseWordFind(searchText)) {
+                        Dispatch find = Dispatch.get(selection, "Find").toDispatch();
+                        configureFind(find, searchText, false);
 
-                    while (executeFind(find)) {
-                        fileMatches++;
-                        Integer pageNumber = safePageNumber(selection);
-                        if (pageNumber != null && pageNumber > 0) {
-                            pages.add(pageNumber);
+                        while (executeFind(find)) {
+                            fileMatches++;
+                            Integer pageNumber = safePageNumber(selection);
+                            if (pageNumber != null && pageNumber > 0) {
+                                pages.add(pageNumber);
+                            }
                         }
+                    } else {
+                        TextSearchStats searchStats = searchTextByDocumentRange(document, searchText, false);
+                        fileMatches = searchStats.matchCount();
+                        pages.addAll(searchStats.pages());
                     }
 
                     if (fileMatches > 0) {
@@ -206,28 +215,34 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                     Dispatch selection = word.getProperty("Selection").toDispatch();
 
                     for (ReplacementRule replacement : replacements) {
-                        resetSelectionToStart(selection);
-                        Dispatch find = Dispatch.get(selection, "Find").toDispatch();
-                        configureFind(find, replacement.find(), true);
-
                         int replacementCount = 0;
                         List<Integer> pages = new ArrayList<>();
                         List<ReplacementContext> contexts = new ArrayList<>();
+                        if (canUseWordFind(replacement.find())) {
+                            resetSelectionToStart(selection);
+                            Dispatch find = Dispatch.get(selection, "Find").toDispatch();
+                            configureFind(find, replacement.find(), true);
 
-                        while (executeFind(find)) {
-                            replacementCount++;
+                            while (executeFind(find)) {
+                                replacementCount++;
 
-                            Integer pageNumber = safePageNumber(selection);
-                            if (pageNumber != null && pageNumber > 0) {
-                                pages.add(pageNumber);
+                                Integer pageNumber = safePageNumber(selection);
+                                if (pageNumber != null && pageNumber > 0) {
+                                    pages.add(pageNumber);
+                                }
+
+                                ReplacementContext context = captureReplacementContext(selection, replacement.find(), replacement.replace());
+                                if (context != null) {
+                                    contexts.add(context);
+                                }
+
+                                replaceCurrentSelection(selection, replacement.replace());
                             }
-
-                            ReplacementContext context = captureReplacementContext(selection, replacement.find(), replacement.replace());
-                            if (context != null) {
-                                contexts.add(context);
-                            }
-
-                            replaceCurrentSelection(selection, replacement.replace());
+                        } else {
+                            LongTextReplaceStats replaceStats = replaceLongTextByDocumentRange(document, replacement);
+                            replacementCount = replaceStats.replacementCount();
+                            pages.addAll(replaceStats.pages());
+                            contexts.addAll(replaceStats.contexts());
                         }
 
                         if (replacementCount > 0) {
@@ -570,6 +585,10 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         Dispatch.call(selection, "SetRange", 0, 0);
     }
 
+    private boolean canUseWordFind(String text) {
+        return text != null && text.length() <= WORD_FIND_TEXT_LIMIT;
+    }
+
     private void configureFind(Dispatch find, String text, boolean matchCase) {
         Dispatch.call(find, "ClearFormatting");
 
@@ -604,10 +623,106 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         }
     }
 
+    private Integer safePageNumber(Dispatch rangeOrSelection, int infoCode) {
+        try {
+            return Dispatch.call(rangeOrSelection, "Information", infoCode).getInt();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Integer safePageNumberForRange(Dispatch range) {
+        return safePageNumber(range, WD_ACTIVE_END_PAGE_NUMBER);
+    }
+
     private void replaceCurrentSelection(Dispatch selection, String replacement) {
         Dispatch selectedRange = Dispatch.get(selection, "Range").toDispatch();
         Dispatch.put(selectedRange, "Text", replacement);
         Dispatch.call(selection, "Collapse", WD_COLLAPSE_END);
+    }
+
+    private TextSearchStats searchTextByDocumentRange(Dispatch document, String searchText, boolean matchCase) {
+        if (searchText == null || searchText.isEmpty()) {
+            return new TextSearchStats(0, List.of());
+        }
+
+        Dispatch contentRange = Dispatch.get(document, "Content").toDispatch();
+        int contentStart = Dispatch.get(contentRange, "Start").getInt();
+        String contentText = String.valueOf(Dispatch.get(contentRange, "Text"));
+        if (contentText.isEmpty()) {
+            return new TextSearchStats(0, List.of());
+        }
+
+        String searchableContent = matchCase ? contentText : contentText.toLowerCase(Locale.ROOT);
+        String searchableNeedle = matchCase ? searchText : searchText.toLowerCase(Locale.ROOT);
+
+        int fromIndex = 0;
+        int matches = 0;
+        List<Integer> pages = new ArrayList<>();
+        while (true) {
+            int index = searchableContent.indexOf(searchableNeedle, fromIndex);
+            if (index < 0) {
+                break;
+            }
+
+            matches++;
+            Dispatch matchRange = Dispatch.call(document, "Range", contentStart + index, contentStart + index + searchText.length()).toDispatch();
+            Integer pageNumber = safePageNumberForRange(matchRange);
+            if (pageNumber != null && pageNumber > 0) {
+                pages.add(pageNumber);
+            }
+            fromIndex = index + searchText.length();
+        }
+
+        return new TextSearchStats(matches, pages);
+    }
+
+    private LongTextReplaceStats replaceLongTextByDocumentRange(Dispatch document, ReplacementRule replacementRule) {
+        String findText = replacementRule.find();
+        String replaceText = replacementRule.replace();
+        if (findText == null || findText.isEmpty()) {
+            return new LongTextReplaceStats(0, List.of(), List.of());
+        }
+
+        Dispatch contentRange = Dispatch.get(document, "Content").toDispatch();
+        int contentStart = Dispatch.get(contentRange, "Start").getInt();
+        String documentText = String.valueOf(Dispatch.get(contentRange, "Text"));
+        if (documentText.isEmpty()) {
+            return new LongTextReplaceStats(0, List.of(), List.of());
+        }
+
+        StringBuilder mutableText = new StringBuilder(documentText);
+        int fromIndex = 0;
+        int replacements = 0;
+        List<Integer> pages = new ArrayList<>();
+        List<ReplacementContext> contexts = new ArrayList<>();
+        while (true) {
+            int index = mutableText.indexOf(findText, fromIndex);
+            if (index < 0) {
+                break;
+            }
+
+            int docStart = contentStart + index;
+            int docEnd = docStart + findText.length();
+            Dispatch matchRange = Dispatch.call(document, "Range", docStart, docEnd).toDispatch();
+            Integer pageNumber = safePageNumberForRange(matchRange);
+            if (pageNumber != null && pageNumber > 0) {
+                pages.add(pageNumber);
+            }
+
+            ReplacementContext replacementContext = buildReplacementContext(mutableText, index, findText, replaceText);
+            if (replacementContext != null) {
+                contexts.add(replacementContext);
+            }
+
+            Dispatch.put(matchRange, "Text", replaceText);
+            mutableText.replace(index, index + findText.length(), replaceText);
+
+            replacements++;
+            fromIndex = index + replaceText.length();
+        }
+
+        return new LongTextReplaceStats(replacements, pages, contexts);
     }
 
     private ReplacementContext captureReplacementContext(Dispatch selection, String findText, String replaceText) {
@@ -618,8 +733,8 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
             int end = Dispatch.get(selectionRange, "End").getInt();
 
             Dispatch contextRange = Dispatch.get(selectionRange, "Duplicate").toDispatch();
-            Dispatch.put(contextRange, "Start", Math.max(0, start - 30));
-            Dispatch.put(contextRange, "End", end + 40);
+            Dispatch.put(contextRange, "Start", Math.max(0, start - CONTEXT_BEFORE_CHARS));
+            Dispatch.put(contextRange, "End", end + CONTEXT_AFTER_CHARS);
 
             String contextText = String.valueOf(Dispatch.get(contextRange, "Text"));
             if (contextText.isBlank()) {
@@ -651,6 +766,20 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private ReplacementContext buildReplacementContext(CharSequence source, int index, String findText, String replaceText) {
+        int contextStart = Math.max(0, index - CONTEXT_BEFORE_CHARS);
+        int contextEnd = Math.min(source.length(), index + findText.length() + CONTEXT_AFTER_CHARS);
+        if (contextEnd <= contextStart) {
+            return null;
+        }
+
+        String prefix = source.subSequence(contextStart, index).toString();
+        String suffix = source.subSequence(index + findText.length(), contextEnd).toString();
+        String original = "..." + prefix + "||" + findText + "||" + suffix + "...";
+        String replaced = "..." + prefix + "||" + replaceText + "||" + suffix + "...";
+        return new ReplacementContext(original, replaced);
     }
 
     private String joinPages(Iterable<Integer> pages) {
@@ -712,6 +841,12 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         private int count;
         private final Set<Integer> pages = new TreeSet<>();
         private final List<ReplacementContext> contexts = new ArrayList<>();
+    }
+
+    private record LongTextReplaceStats(int replacementCount, List<Integer> pages, List<ReplacementContext> contexts) {
+    }
+
+    private record TextSearchStats(int matchCount, List<Integer> pages) {
     }
 
     private record ReplacementContext(String original, String replaced) {
