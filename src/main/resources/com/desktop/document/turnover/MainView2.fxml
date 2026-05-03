@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.BorderPane?>
@@ -55,7 +56,7 @@
                                 </ToggleButton>
                                 <ToggleButton fx:id="darkThemeButton" maxWidth="1.7976931348623157E308"
                                               mnemonicParsing="false" onAction="#darkThemeButtonClick" prefHeight="38.0"
-                                              styleClass="theme-button" text="Черная">
+                                              styleClass="theme-button" text="Темная">
                                     <HBox.hgrow>
                                         <Priority fx:constant="ALWAYS"/>
                                     </HBox.hgrow>
@@ -68,6 +69,11 @@
         </VBox>
     </left>
     <center>
-        <StackPane fx:id="contentContainer" styleClass="app-content" BorderPane.alignment="CENTER"/>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" pannable="true" styleClass="app-content-scroll"
+                    vbarPolicy="AS_NEEDED" BorderPane.alignment="CENTER">
+            <content>
+                <StackPane fx:id="contentContainer" styleClass="app-content"/>
+            </content>
+        </ScrollPane>
     </center>
 </fx:root>

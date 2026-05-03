@@ -51,7 +51,7 @@ public class DocumentTurnoverApplication extends Application {
         stage.setScene(scene);
         stage.setMinWidth(800);
         stage.setMinHeight(715);
-        stage.centerOnScreen();
+        stage.setMaximized(true);
         stage.show();
     }
 

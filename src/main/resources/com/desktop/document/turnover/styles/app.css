@@ -210,6 +210,15 @@
     -fx-padding: 16;
 }
 
+.app-content-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.app-content-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
 .converter-root {
     -fx-alignment: top-left;
 }
