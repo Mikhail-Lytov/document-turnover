@@ -4,12 +4,11 @@ Desktop-приложение на JavaFX + Spring Boot.
 
 ## Требования
 
-- JDK `25` (в `pom.xml` задано `<java.version>25</java.version>`)
-- Доступ в интернет для скачивания Maven-зависимостей при первой сборке
-- Для сборки `.exe`: Windows + `jpackage` (входит в JDK 25)
-- Опционально для некоторых конфигураций `jpackage` на Windows может понадобиться WiX Toolset
+- JDK или JRE `25+` для запуска готового `.exe`.
+- JDK `25` для сборки проекта.
+- Доступ в интернет для скачивания Maven-зависимостей при первой сборке.
 
-## Быстрый запуск (dev)
+## Быстрый запуск для разработки
 
 macOS/Linux:
 
@@ -23,50 +22,26 @@ Windows:
 mvnw.cmd clean javafx:run
 ```
 
-## Сборка JAR
-
-Сборка "толстого" JAR (со всеми зависимостями):
-
-macOS/Linux:
-
-```bash
-./mvnw -Pwindows-exe -Dexec.skip=true -DskipTests clean package
-```
-
-Windows:
-
-```bat
-mvnw.cmd -Pwindows-exe -Dexec.skip=true -DskipTests clean package
-```
-
-Результат:
-
-- `target/document-turnover-1.0-SNAPSHOT-all.jar` — исполняемый JAR
-- `target/document-turnover-1.0-SNAPSHOT.jar` — обычный JAR без зависимостей
-
-Запуск исполняемого JAR:
-
-```bash
-java -jar target/document-turnover-1.0-SNAPSHOT-all.jar
-```
-
 ## Сборка Windows EXE
 
-Профиль `windows-exe` уже настроен в `pom.xml` и вызывает `jpackage` с типом `exe`.
+Профиль `windows-exe` собирает "толстый" JAR со всеми зависимостями и заворачивает его в обычный `.exe` через Launch4j. Это не установщик: файл запускается напрямую, но на компьютере должна быть установлена Java `25+`.
 
-Запускать на Windows:
+Windows:
 
 ```bat
 mvnw.cmd -Pwindows-exe -DskipTests clean package
 ```
 
-Где искать результат:
+Результат:
 
-- `target\installer\` — каталог с готовым `.exe`-инсталлятором
+- `target\windows-exe\DocumentTurnover.exe` — готовый запускаемый файл.
+- `target\document-turnover-1.0-SNAPSHOT-all.jar` — исполняемый JAR, который можно запустить командой ниже.
 
-Имя приложения берётся из `pom.xml`:
+Запуск JAR напрямую:
 
-- `<app.name>DocumentTurnover</app.name>`
+```bat
+java -jar target\document-turnover-1.0-SNAPSHOT-all.jar
+```
 
 ## Полезные команды
 
@@ -74,7 +49,6 @@ mvnw.cmd -Pwindows-exe -DskipTests clean package
 
 ```bash
 java -version
-jpackage --version
 ./mvnw -v
 ```
 
@@ -89,8 +63,5 @@ jpackage --version
 - `release version 25 not supported`  
   Используется JDK ниже 25. Установите JDK 25 и проверьте `java -version`.
 
-- `jpackage: command not found`  
-  Используется JRE или неполный JDK. Нужен полноценный JDK 25 с `jpackage`.
-
-- Ошибки при создании `.exe` на Windows  
-  Проверьте, что сборка запускается именно на Windows и при необходимости установите WiX Toolset.
+- При запуске `.exe` появляется сообщение о Java  
+  На компьютере нет подходящей Java. Установите JDK/JRE 25 или новее и убедитесь, что `java` доступна из `PATH`.

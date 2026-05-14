@@ -16,7 +16,9 @@
         <spring-boot.version>4.0.2</spring-boot.version>
         <java.version>25</java.version>
         <lombok.version>1.18.38</lombok.version>
+        <launch4j.maven.plugin.version>2.5.2</launch4j.maven.plugin.version>
         <app.name>DocumentTurnover</app.name>
+        <app.version>1.0.0</app.version>
     </properties>
 
     <dependencies>
@@ -189,11 +191,34 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>clear-target-readonly-attributes</id>
+                                <phase>pre-clean</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <attrib readonly="false">
+                                            <fileset dir="${project.build.directory}" erroronmissingdir="false">
+                                                <include name="**/*"/>
+                                            </fileset>
+                                        </attrib>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
                         <version>3.6.0</version>
                         <executions>
                             <execution>
-                                <id>shade-for-installer</id>
+                                <id>shade-for-launcher</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>shade</goal>
@@ -203,7 +228,7 @@
                                     <createDependencyReducedPom>false</createDependencyReducedPom>
                                     <transformers>
                                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                            <mainClass>com.desktop.document.turnover.DocumentTurnoverApplication</mainClass>
+                                            <mainClass>com.desktop.document.turnover.DocumentTurnoverLauncher</mainClass>
                                         </transformer>
                                     </transformers>
                                 </configuration>
@@ -211,37 +236,38 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.5.0</version>
+                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                        <artifactId>launch4j-maven-plugin</artifactId>
+                        <version>${launch4j.maven.plugin.version}</version>
                         <executions>
                             <execution>
-                                <id>jpackage-windows</id>
+                                <id>wrap-jar-as-exe</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>exec</goal>
+                                    <goal>launch4j</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>jpackage</executable>
-                                    <arguments>
-                                        <argument>--type</argument>
-                                        <argument>exe</argument>
-                                        <argument>--name</argument>
-                                        <argument>${app.name}</argument>
-                                        <argument>--input</argument>
-                                        <argument>${project.build.directory}</argument>
-                                        <argument>--main-jar</argument>
-                                        <argument>${project.artifactId}-${project.version}-all.jar</argument>
-                                        <argument>--main-class</argument>
-                                        <argument>com.desktop.document.turnover.DocumentTurnoverApplication</argument>
-                                        <argument>--runtime-image</argument>
-                                        <argument>${java.home}</argument>
-                                        <argument>--dest</argument>
-                                        <argument>${project.build.directory}/installer</argument>
-                                        <argument>--win-shortcut</argument>
-                                        <argument>--win-menu</argument>
-                                        <argument>--win-console</argument>
-                                    </arguments>
+                                    <headerType>gui</headerType>
+                                    <outfile>${project.build.directory}/windows-exe/${app.name}.exe</outfile>
+                                    <jar>${project.build.directory}/${project.artifactId}-${project.version}-all.jar</jar>
+                                    <errTitle>${app.name}</errTitle>
+                                    <classPath>
+                                        <mainClass>com.desktop.document.turnover.DocumentTurnoverLauncher</mainClass>
+                                    </classPath>
+                                    <jre>
+                                        <minVersion>${java.version}</minVersion>
+                                    </jre>
+                                    <versionInfo>
+                                        <fileVersion>${app.version}.0</fileVersion>
+                                        <txtFileVersion>${app.version}</txtFileVersion>
+                                        <fileDescription>${app.name}</fileDescription>
+                                        <copyright>${project.groupId}</copyright>
+                                        <productVersion>${app.version}.0</productVersion>
+                                        <txtProductVersion>${app.version}</txtProductVersion>
+                                        <productName>${app.name}</productName>
+                                        <internalName>${app.name}</internalName>
+                                        <originalFilename>${app.name}.exe</originalFilename>
+                                    </versionInfo>
                                 </configuration>
                             </execution>
                         </executions>
