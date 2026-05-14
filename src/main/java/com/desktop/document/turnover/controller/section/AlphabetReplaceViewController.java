@@ -49,6 +49,11 @@ public class AlphabetReplaceViewController {
     private static final String LIGHT_THEME_CLASS = "theme-light";
     private static final String DARK_THEME_CLASS = "theme-dark";
     private static final PseudoClass NEW_ROW_PSEUDO_CLASS = PseudoClass.getPseudoClass("new-row");
+    private static final double ALPHABET_EDITOR_MIN_ROW_HEIGHT = 52.0;
+    private static final double ALPHABET_EDITOR_LINE_HEIGHT = 20.0;
+    private static final double ALPHABET_EDITOR_ROW_VERTICAL_PADDING = 22.0;
+    private static final double ALPHABET_EDITOR_CELL_HORIZONTAL_PADDING = 28.0;
+    private static final double ALPHABET_EDITOR_AVERAGE_CHAR_WIDTH = 7.5;
 
     private final AlphabetReplaceSectionHandler alphabetReplaceSectionHandler;
 
@@ -298,11 +303,29 @@ public class AlphabetReplaceViewController {
         table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         table.getStyleClass().add("alphabet-editor-table");
         table.setRowFactory(ignored -> new TableRow<>() {
+            private ReplacementRow boundItem;
+
             @Override
             protected void updateItem(ReplacementRow item, boolean empty) {
+                if (boundItem != null) {
+                    boundItem.fromProperty().removeListener(rowHeightListener);
+                    boundItem.toProperty().removeListener(rowHeightListener);
+                }
                 super.updateItem(item, empty);
                 pseudoClassStateChanged(NEW_ROW_PSEUDO_CLASS, !empty && item != null && item.isBlank());
+                boundItem = empty ? null : item;
+                if (boundItem == null) {
+                    setPrefHeight(USE_COMPUTED_SIZE);
+                    return;
+                }
+
+                boundItem.fromProperty().addListener(rowHeightListener);
+                boundItem.toProperty().addListener(rowHeightListener);
+                updatePreferredRowHeight(this, table, boundItem);
             }
+
+            private final javafx.beans.InvalidationListener rowHeightListener =
+                    observable -> updatePreferredRowHeight(this, table, boundItem);
         });
 
         TableColumn<ReplacementRow, String> fromColumn = new TableColumn<>("Что менять");
@@ -543,6 +566,40 @@ public class AlphabetReplaceViewController {
         }
     }
 
+    private void updatePreferredRowHeight(TableRow<ReplacementRow> row, TableView<ReplacementRow> table, ReplacementRow item) {
+        if (row == null || item == null) {
+            return;
+        }
+        row.setPrefHeight(calculateRowHeight(table, item.getFrom(), item.getTo()));
+    }
+
+    private void updatePreferredRowHeight(TableRow<ReplacementRow> row, TableView<ReplacementRow> table, String from, String to) {
+        if (row == null) {
+            return;
+        }
+        row.setPrefHeight(calculateRowHeight(table, from, to));
+    }
+
+    private double calculateRowHeight(TableView<ReplacementRow> table, String from, String to) {
+        double tableWidth = table == null ? 0 : table.getWidth();
+        double textWidth = Math.max(80.0, (tableWidth - 2.0) / 2.0 - ALPHABET_EDITOR_CELL_HORIZONTAL_PADDING);
+        int charactersPerLine = Math.max(8, (int) Math.floor(textWidth / ALPHABET_EDITOR_AVERAGE_CHAR_WIDTH));
+        int lineCount = Math.max(countDisplayedLines(from, charactersPerLine), countDisplayedLines(to, charactersPerLine));
+        return Math.max(ALPHABET_EDITOR_MIN_ROW_HEIGHT, lineCount * ALPHABET_EDITOR_LINE_HEIGHT + ALPHABET_EDITOR_ROW_VERTICAL_PADDING);
+    }
+
+    private int countDisplayedLines(String value, int charactersPerLine) {
+        if (value == null || value.isEmpty()) {
+            return 1;
+        }
+
+        int lines = 0;
+        for (String paragraph : value.split("\\R", -1)) {
+            lines += Math.max(1, (int) Math.ceil((double) paragraph.length() / charactersPerLine));
+        }
+        return lines;
+    }
+
     private TableCell<ReplacementRow, String> createAutoCommitCell() {
         return new TableCell<>() {
             private final TextArea editor = new TextArea();
@@ -551,6 +608,7 @@ public class AlphabetReplaceViewController {
                 editor.getStyleClass().add("alphabet-editor-cell-field");
                 editor.setWrapText(true);
                 editor.setPrefRowCount(3);
+                editor.textProperty().addListener((observable, oldValue, newValue) -> updateEditingRowHeight(newValue));
                 editor.focusedProperty().addListener((observable, oldValue, focusedNow) -> {
                     if (!focusedNow) {
                         commitEdit(editor.getText());
@@ -588,6 +646,7 @@ public class AlphabetReplaceViewController {
                 Platform.runLater(() -> {
                     editor.requestFocus();
                     editor.selectAll();
+                    updateEditingRowHeight(editor.getText());
                 });
             }
 
@@ -638,6 +697,20 @@ public class AlphabetReplaceViewController {
                     setGraphic(null);
                     setContentDisplay(ContentDisplay.TEXT_ONLY);
                 }
+            }
+
+            private void updateEditingRowHeight(String editorText) {
+                ReplacementRow rowItem = getTableRow() == null ? null : getTableRow().getItem();
+                TableView<ReplacementRow> table = getTableView();
+                TableColumn<ReplacementRow, String> column = getTableColumn();
+                if (rowItem == null || table == null || column == null) {
+                    return;
+                }
+
+                int columnIndex = table.getColumns().indexOf(column);
+                String from = columnIndex == 0 ? editorText : rowItem.getFrom();
+                String to = columnIndex == 1 ? editorText : rowItem.getTo();
+                updatePreferredRowHeight(getTableRow(), table, from, to);
             }
         };
     }
