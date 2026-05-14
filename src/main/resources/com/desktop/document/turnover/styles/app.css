@@ -496,7 +496,7 @@
 .table-view.alphabet-editor-table .table-row-cell {
     -fx-background-color: -control-bg;
     -fx-border-color: transparent transparent -panel-border transparent;
-    -fx-cell-size: 36;
+    -fx-min-height: 52;
 }
 
 .table-view.alphabet-editor-table .table-row-cell:odd {
@@ -518,7 +518,13 @@
     -fx-padding: 0 10 0 10;
 }
 
-.text-field.alphabet-editor-cell-field {
+.text-field.alphabet-editor-cell-field,
+.text-area.alphabet-editor-cell-field {
     -fx-background-insets: 0;
     -fx-padding: 4 8 4 8;
+}
+
+.text-area.alphabet-editor-cell-field .content {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
 }

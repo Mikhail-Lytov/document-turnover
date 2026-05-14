@@ -224,7 +224,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                         int replacementCount = 0;
                         List<Integer> pages = new ArrayList<>();
                         List<ReplacementContext> contexts = new ArrayList<>();
-                        if (canUseWordFind(replacement.find())) {
+                        if (canUseWordFindReplacement(replacement)) {
                             resetSelectionToStart(selection);
                             Dispatch find = Dispatch.get(selection, "Find").toDispatch();
                             configureFind(find, replacement.find(), true);
@@ -477,13 +477,37 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                 continue;
             }
 
-            String find = matcher.group(1).trim();
-            String replace = matcher.group(2).trim();
+            String find = decodeAlphabetCell(matcher.group(1).trim());
+            String replace = decodeAlphabetCell(matcher.group(2).trim());
             if (!find.isEmpty()) {
                 replacements.add(new ReplacementRule(find, replace));
             }
         }
         return replacements;
+    }
+
+    private String decodeAlphabetCell(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder decoded = new StringBuilder(value.length());
+        boolean escaping = false;
+        for (int i = 0; i < value.length(); i++) {
+            char current = value.charAt(i);
+            if (escaping) {
+                decoded.append(current == 'n' ? '\r' : current);
+                escaping = false;
+            } else if (current == '\\') {
+                escaping = true;
+            } else {
+                decoded.append(current);
+            }
+        }
+        if (escaping) {
+            decoded.append('\\');
+        }
+        return decoded.toString();
     }
 
     private List<Path> listWordFiles(Path directory) {
@@ -589,7 +613,16 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     private boolean canUseWordFind(String text) {
-        return text != null && text.length() <= WORD_FIND_TEXT_LIMIT;
+        return text != null
+                && text.length() <= WORD_FIND_TEXT_LIMIT
+                && !text.contains("\r")
+                && !text.contains("\n");
+    }
+
+    private boolean canUseWordFindReplacement(ReplacementRule replacement) {
+        return replacement != null
+                && canUseWordFind(replacement.find())
+                && canUseWordFind(replacement.replace());
     }
 
     private void configureFind(Dispatch find, String text, boolean matchCase) {

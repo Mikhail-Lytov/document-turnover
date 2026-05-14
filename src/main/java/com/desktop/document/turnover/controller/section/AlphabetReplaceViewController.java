@@ -27,6 +27,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -308,11 +309,15 @@ public class AlphabetReplaceViewController {
         fromColumn.setCellValueFactory(cellData -> cellData.getValue().fromProperty());
         fromColumn.setCellFactory(column -> createAutoCommitCell());
         fromColumn.setOnEditCommit(event -> event.getRowValue().setFrom(event.getNewValue()));
+        fromColumn.setResizable(false);
+        fromColumn.prefWidthProperty().bind(table.widthProperty().subtract(2).divide(2));
 
         TableColumn<ReplacementRow, String> toColumn = new TableColumn<>("На что менять");
         toColumn.setCellValueFactory(cellData -> cellData.getValue().toProperty());
         toColumn.setCellFactory(column -> createAutoCommitCell());
         toColumn.setOnEditCommit(event -> event.getRowValue().setTo(event.getNewValue()));
+        toColumn.setResizable(false);
+        toColumn.prefWidthProperty().bind(table.widthProperty().subtract(2).divide(2));
 
         table.getColumns().setAll(fromColumn, toColumn);
         VBox.setVgrow(table, Priority.ALWAYS);
@@ -408,8 +413,8 @@ public class AlphabetReplaceViewController {
                 continue;
             }
 
-            String from = trimmed.substring(0, arrowIndex).trim();
-            String to = trimmed.substring(arrowIndex + 2).trim();
+            String from = decodeAlphabetCell(trimmed.substring(0, arrowIndex).trim());
+            String to = decodeAlphabetCell(trimmed.substring(arrowIndex + 2).trim());
             if (!from.isEmpty() && !to.isEmpty()) {
                 rows.add(new ReplacementRow(from, to));
             }
@@ -422,7 +427,7 @@ public class AlphabetReplaceViewController {
         return rows.stream()
                 .map(row -> new String[]{safeTrim(row.getFrom()), safeTrim(row.getTo())})
                 .filter(parts -> !parts[0].isEmpty() && !parts[1].isEmpty())
-                .map(parts -> parts[0] + " -> " + parts[1])
+                .map(parts -> encodeAlphabetCell(parts[0]) + " -> " + encodeAlphabetCell(parts[1]))
                 .collect(Collectors.joining("\n"));
     }
 
@@ -432,6 +437,39 @@ public class AlphabetReplaceViewController {
 
     private String safeTrim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String encodeAlphabetCell(String value) {
+        return value == null
+                ? ""
+                : value.replace("\\", "\\\\")
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
+                .replace("\n", "\\n");
+    }
+
+    private String decodeAlphabetCell(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder decoded = new StringBuilder(value.length());
+        boolean escaping = false;
+        for (int i = 0; i < value.length(); i++) {
+            char current = value.charAt(i);
+            if (escaping) {
+                decoded.append(current == 'n' ? '\n' : current);
+                escaping = false;
+            } else if (current == '\\') {
+                escaping = true;
+            } else {
+                decoded.append(current);
+            }
+        }
+        if (escaping) {
+            decoded.append('\\');
+        }
+        return decoded.toString();
     }
 
     private void showWarning(Window owner, String message) {
@@ -507,22 +545,27 @@ public class AlphabetReplaceViewController {
 
     private TableCell<ReplacementRow, String> createAutoCommitCell() {
         return new TableCell<>() {
-            private final TextField editor = new TextField();
+            private final TextArea editor = new TextArea();
 
             {
                 editor.getStyleClass().add("alphabet-editor-cell-field");
-                editor.setOnAction(event -> commitEdit(editor.getText()));
+                editor.setWrapText(true);
+                editor.setPrefRowCount(3);
                 editor.focusedProperty().addListener((observable, oldValue, focusedNow) -> {
                     if (!focusedNow) {
                         commitEdit(editor.getText());
                     }
                 });
-                editor.setOnKeyPressed(event -> {
+                editor.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
                     if (event.getCode() == KeyCode.ESCAPE) {
                         cancelEdit();
                         event.consume();
+                    } else if (event.getCode() == KeyCode.ENTER && event.isControlDown()) {
+                        commitEdit(editor.getText());
+                        event.consume();
                     }
                 });
+                setWrapText(true);
                 setContentDisplay(ContentDisplay.TEXT_ONLY);
                 setOnMouseClicked(event -> {
                     if (!isEmpty() && !isEditing() && event.getClickCount() == 1) {
