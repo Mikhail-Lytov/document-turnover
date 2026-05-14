@@ -51,6 +51,22 @@ public class ConverterWordServiceImpl implements ConverterService {
     }
 
     @Override
+    public int convertFile(Path file, TypeFromDocs sourceType, TypeToDocs targetType, IntConsumer processedFilesConsumer) {
+        defaultValidateFile(file, sourceType, targetType);
+
+        if (getFileCountByType(file, sourceType) == 0) {
+            return 0;
+        }
+
+        if (Objects.equals(sourceType.getName(), targetType.getName())) {
+            notifyProcessedFiles(processedFilesConsumer, 1);
+            return 0;
+        }
+
+        return convertWithWord(List.of(file), targetType, processedFilesConsumer);
+    }
+
+    @Override
     public List<TypeFromDocs> getTypes() {
         return List.of(
                 TypeFromDocs.DOS,

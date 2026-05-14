@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,8 +63,8 @@ public class ConverterSectionHandler {
     private static final String TYPE_FROM_MENU_STYLE_CLASS = "converter-type-from-menu";
     private static final String TYPE_FROM_MENU_ITEM_STYLE_CLASS = "converter-type-menu-item";
     private static final String TYPE_FROM_CHECKBOX_STYLE_CLASS = "converter-type-check";
-    private static final String BACKUP_DIRECTORY_NAME = "beckub";
-    private static final String TEMP_BACKUP_DIRECTORY_PREFIX = "beckub-tmp-";
+    private static final String BACKUP_DIRECTORY_NAME = "backup";
+    private static final String TEMP_BACKUP_DIRECTORY_PREFIX = "backup-tmp-";
 
     private final ConverterStrategy converterStrategy;
     private final Set<TypeFromDocs> selectedTypesFrom = EnumSet.noneOf(TypeFromDocs.class);
@@ -111,16 +112,14 @@ public class ConverterSectionHandler {
             throw new IllegalStateException("Не выбраны входные форматы или выходной формат.");
         }
         if (directoryPath == null || directoryPath.isBlank()) {
-            throw new IllegalArgumentException("Не выбрана папка для конвертации.");
+            throw new IllegalArgumentException("Не выбран источник для конвертации.");
         }
 
-        Path selectedDirectory = Path.of(directoryPath.trim()).toAbsolutePath().normalize();
-        if (!Files.isDirectory(selectedDirectory)) {
-            throw new IllegalArgumentException("Путь не является директорией: " + selectedDirectory);
-        }
-
-        Path backupPath = selectedDirectory.resolve(BACKUP_DIRECTORY_NAME).toAbsolutePath().normalize();
-        Path temporaryBackupPath = createTemporaryBackupCopy(selectedDirectory, backupPath);
+        Path selectedPath = Path.of(directoryPath.trim()).toAbsolutePath().normalize();
+        boolean fileMode = ResourcesSystemType.FILE.equals(selectedResourceType);
+        validateSelectedPath(selectedPath, fileMode);
+        Path backupPath = resolveBackupPath(selectedPath, fileMode);
+        Path temporaryBackupPath = createTemporaryBackupCopy(selectedPath, backupPath);
 
         int allFiles = 0;
         Map<TypeFromDocs, ConverterService> convertersByType = new EnumMap<>(TypeFromDocs.class);
@@ -135,7 +134,9 @@ public class ConverterSectionHandler {
                 }
 
                 convertersByType.put(selectedTypeFrom, converterService);
-                allFiles += converterService.getFilesCountByType(selectedDirectory, selectedTypeFrom);
+                allFiles += fileMode
+                        ? converterService.getFileCountByType(selectedPath, selectedTypeFrom)
+                        : converterService.getFilesCountByType(selectedPath, selectedTypeFrom);
             }
 
             notifyProgress(progressCallback, 0, allFiles);
@@ -145,7 +146,7 @@ public class ConverterSectionHandler {
 
             for (TypeFromDocs selectedTypeFrom : selectedTypesFrom) {
                 ConverterService converterService = convertersByType.get(selectedTypeFrom);
-                convertedFiles += converterService.convertDirectory(selectedDirectory, selectedTypeFrom, selectedTypeTo, processedFilesDelta -> {
+                convertedFiles += convertSelectedPath(converterService, selectedPath, selectedTypeFrom, fileMode, processedFilesDelta -> {
                     if (processedFilesDelta <= 0) {
                         return;
                     }
@@ -173,8 +174,52 @@ public class ConverterSectionHandler {
             }
         }
 
-        String absolutePath = selectedDirectory.toAbsolutePath().toString();
+        String absolutePath = fileMode ? buildConvertedFilePath(selectedPath, selectedTypeTo).toString() : selectedPath.toString();
         return new ConversionResult(allFiles, convertedFiles, backupPath.toString(), absolutePath);
+    }
+
+    private void validateSelectedPath(Path selectedPath, boolean fileMode) {
+        if (fileMode) {
+            if (!Files.isRegularFile(selectedPath)) {
+                throw new IllegalArgumentException("Путь не является файлом: " + selectedPath);
+            }
+            return;
+        }
+
+        if (!Files.isDirectory(selectedPath)) {
+            throw new IllegalArgumentException("Путь не является директорией: " + selectedPath);
+        }
+    }
+
+    private Path resolveBackupPath(Path selectedPath, boolean fileMode) {
+        Path backupRoot = fileMode ? selectedPath.getParent() : selectedPath;
+        if (backupRoot == null) {
+            backupRoot = selectedPath.toAbsolutePath().getParent();
+        }
+        if (backupRoot == null) {
+            throw new IllegalArgumentException("Не удалось определить папку для бэкапа: " + selectedPath);
+        }
+
+        return backupRoot.resolve(BACKUP_DIRECTORY_NAME).toAbsolutePath().normalize();
+    }
+
+    private int convertSelectedPath(
+            ConverterService converterService,
+            Path selectedPath,
+            TypeFromDocs selectedTypeFrom,
+            boolean fileMode,
+            IntConsumer processedFilesConsumer
+    ) {
+        return fileMode
+                ? converterService.convertFile(selectedPath, selectedTypeFrom, selectedTypeTo, processedFilesConsumer)
+                : converterService.convertDirectory(selectedPath, selectedTypeFrom, selectedTypeTo, processedFilesConsumer);
+    }
+
+    private Path buildConvertedFilePath(Path sourcePath, TypeToDocs targetType) {
+        String fileName = sourcePath.getFileName().toString();
+        int extensionPosition = fileName.lastIndexOf('.');
+        String baseName = extensionPosition > 0 ? fileName.substring(0, extensionPosition) : fileName;
+        return sourcePath.getParent().resolve(baseName + "." + targetType.getName()).toAbsolutePath().normalize();
     }
 
     private void notifyProgress(BiConsumer<Integer, Integer> progressCallback, int processedFiles, int totalFiles) {
@@ -183,17 +228,32 @@ public class ConverterSectionHandler {
         }
     }
 
-    private Path createTemporaryBackupCopy(Path sourceDirectory, Path backupPath) {
-        Path sourceParent = sourceDirectory.getParent();
+    private Path createTemporaryBackupCopy(Path sourcePath, Path backupPath) {
+        Path sourceParent = sourcePath.getParent();
         try {
             Path temporaryBackupPath = sourceParent != null
                     ? Files.createTempDirectory(sourceParent, TEMP_BACKUP_DIRECTORY_PREFIX)
                     : Files.createTempDirectory(TEMP_BACKUP_DIRECTORY_PREFIX);
-            copyDirectory(sourceDirectory, temporaryBackupPath, backupPath);
+            copySourceToBackup(sourcePath, temporaryBackupPath, backupPath);
             return temporaryBackupPath.toAbsolutePath().normalize();
         } catch (IOException exception) {
-            throw new IllegalStateException("Не удалось создать бэкап папки: " + exception.getMessage(), exception);
+            throw new IllegalStateException("Не удалось создать бэкап источника: " + exception.getMessage(), exception);
         }
+    }
+
+    private void copySourceToBackup(Path sourcePath, Path temporaryBackupPath, Path backupPath) throws IOException {
+        if (Files.isDirectory(sourcePath)) {
+            copyDirectory(sourcePath, temporaryBackupPath, backupPath);
+            return;
+        }
+
+        Files.createDirectories(temporaryBackupPath);
+        Files.copy(
+                sourcePath,
+                temporaryBackupPath.resolve(sourcePath.getFileName()),
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.COPY_ATTRIBUTES
+        );
     }
 
     private void copyDirectory(Path source, Path target, Path excludedPath) throws IOException {

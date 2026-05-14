@@ -16,10 +16,23 @@ public interface ConverterService {
 
     int getFilesCountByType(Path directory, TypeFromDocs sourceType);
 
+    default int getFileCountByType(Path file, TypeFromDocs sourceType) {
+        if (file == null || sourceType == null || !java.nio.file.Files.isRegularFile(file)) {
+            return 0;
+        }
+
+        String normalizedExtension = "." + sourceType.getName().toLowerCase(Locale.ROOT);
+        return file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(normalizedExtension) ? 1 : 0;
+    }
+
     int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType);
 
     default int convertDirectory(Path directory, TypeFromDocs sourceType, TypeToDocs targetType, IntConsumer processedFilesConsumer) {
         return convertDirectory(directory, sourceType, targetType);
+    }
+
+    default int convertFile(Path file, TypeFromDocs sourceType, TypeToDocs targetType, IntConsumer processedFilesConsumer) {
+        throw new UnsupportedOperationException("Single file conversion is not supported");
     }
 
     List<TypeFromDocs> getTypes();
@@ -44,5 +57,14 @@ public interface ConverterService {
             throw new IllegalArgumentException("Path is not a directory: " + directory);
         }
 
+    }
+
+    default void defaultValidateFile(Path file, TypeFromDocs sourceType, TypeToDocs targetType) {
+        if (file == null || sourceType == null || targetType == null) {
+            throw new IllegalArgumentException("File and types are required");
+        }
+        if (!java.nio.file.Files.isRegularFile(file)) {
+            throw new IllegalArgumentException("Path is not a file: " + file);
+        }
     }
 }
