@@ -8,10 +8,14 @@ import com.jacob.com.Variant;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.FileVisitResult;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -43,8 +47,9 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     public SearchOperationResult searchInDocuments(Path directory, String searchText) {
         validateDirectory(directory);
         validateSearchText(searchText);
+        Path sourceDirectory = directory.toAbsolutePath().normalize();
 
-        List<Path> files = listWordFiles(directory);
+        List<Path> files = listWordFiles(sourceDirectory);
         if (files.isEmpty()) {
             String report = "=== РЕЗУЛЬТАТЫ ПОИСКА ===\nDOC/DOCX файлы не найдены в выбранной папке.";
             return new SearchOperationResult(0, 0, List.of(), List.of(), report);
@@ -139,26 +144,27 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     private ReplaceOperationResult replaceInDocuments(Path directory, List<ReplacementRule> replacements, String alphabetSource) {
-        List<Path> files = listWordFiles(directory);
+        Path sourceDirectory = directory.toAbsolutePath().normalize();
+        List<Path> files = listWordFiles(sourceDirectory);
         if (files.isEmpty()) {
             String report = "=== РЕЗУЛЬТАТ ===\nDOC/DOCX файлы не найдены в выбранной папке.";
-            return new ReplaceOperationResult(0, 0, replacements.size(), directory, directory, null, null, List.of(), report);
+            return new ReplaceOperationResult(0, 0, replacements.size(), sourceDirectory, sourceDirectory, null, null, List.of(), report);
         }
 
         List<String> errors = new ArrayList<>();
-        Path backupRootPath = createUniqueBackupPath(directory);
-        Path backupPath = backupRootPath.resolve("old_file");
-        Path logsPath = backupRootPath.resolve("logs");
+        Path backupRootPath = createUniqueBackupPath(sourceDirectory);
+        Path backupPath = backupRootPath.resolve("old_file").toAbsolutePath().normalize();
+        Path logsPath = backupRootPath.resolve("logs").toAbsolutePath().normalize();
         try {
-            copyDirectory(directory, backupPath);
+            copyDirectory(sourceDirectory, backupPath, backupRootPath);
             Files.createDirectories(logsPath);
         } catch (IOException exception) {
             throw new IllegalStateException("Не удалось создать бэкап папки: " + safeMessage(exception), exception);
         }
 
         String timestamp = LocalDateTime.now().format(LOG_TS_FORMAT);
-        Path logFile = logsPath.resolve("replacements_log_" + timestamp + ".txt");
-        Path contextLogFile = logsPath.resolve("context_log_" + timestamp + ".txt");
+        Path logFile = logsPath.resolve("replacements_log_" + timestamp + ".txt").toAbsolutePath().normalize();
+        Path contextLogFile = logsPath.resolve("context_log_" + timestamp + ".txt").toAbsolutePath().normalize();
 
         List<String> mainLogLines = new ArrayList<>();
         List<String> contextLogLines = new ArrayList<>();
@@ -343,7 +349,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                 files.size(),
                 totalReplacements,
                 replacements.size(),
-                directory,
+                sourceDirectory,
                 backupPath,
                 logFile,
                 contextLogFile,
@@ -498,52 +504,49 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     private Path createUniqueBackupPath(Path directory) {
-        Path parent = directory.getParent();
-        if (parent == null) {
-            throw new IllegalArgumentException("Не удалось определить родительскую папку для: " + directory);
-        }
 
         String baseBackupName = "backup";
-        Path backupPath = parent.resolve(baseBackupName);
+        Path backupPath = directory.resolve(baseBackupName).toAbsolutePath().normalize();
 
-        if (!Files.exists(backupPath)) {
-            return backupPath;
-        }
-
-        int counter = 1;
-        while (Files.exists(backupPath)) {
-            backupPath = parent.resolve(baseBackupName + " " + counter);
-            counter++;
+        try {
+            Files.createDirectories(backupPath);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Не удалось создать папку backup: " + backupPath, e);
         }
 
         return backupPath;
     }
 
-    private void copyDirectory(Path source, Path target) throws IOException {
-        try (Stream<Path> stream = Files.walk(source)) {
-            stream.forEach(path -> {
-                Path relative = source.relativize(path);
-                Path destination = target.resolve(relative);
-                try {
-                    if (Files.isDirectory(path)) {
-                        Files.createDirectories(destination);
-                    } else {
-                        Path destinationParent = destination.getParent();
-                        if (destinationParent != null) {
-                            Files.createDirectories(destinationParent);
-                        }
-                        Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-                    }
-                } catch (IOException exception) {
-                    throw new IllegalStateException(exception);
+    private void copyDirectory(Path source, Path target, Path excludedPath) throws IOException {
+        Path normalizedExcludedPath = excludedPath.toAbsolutePath().normalize();
+
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) throws IOException {
+                if (directory.toAbsolutePath().normalize().startsWith(normalizedExcludedPath)) {
+                    return FileVisitResult.SKIP_SUBTREE;
                 }
-            });
-        } catch (IllegalStateException wrapped) {
-            if (wrapped.getCause() instanceof IOException ioException) {
-                throw ioException;
+
+                Path destination = target.resolve(source.relativize(directory));
+                Files.createDirectories(destination);
+                return FileVisitResult.CONTINUE;
             }
-            throw wrapped;
-        }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+                if (file.toAbsolutePath().normalize().startsWith(normalizedExcludedPath)) {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                Path destination = target.resolve(source.relativize(file));
+                Path destinationParent = destination.getParent();
+                if (destinationParent != null) {
+                    Files.createDirectories(destinationParent);
+                }
+                Files.copy(file, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private ActiveXComponent createWordApp() {

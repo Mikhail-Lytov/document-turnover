@@ -168,7 +168,7 @@ public class AlphabetReplaceSectionHandler {
             throw new IllegalArgumentException("Ожидается папка, а не файл: " + path);
         }
 
-        return path;
+        return path.toAbsolutePath().normalize();
     }
 
     private Path parseFile(String filePath, String fieldName) {
