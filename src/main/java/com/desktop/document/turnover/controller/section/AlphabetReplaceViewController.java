@@ -18,6 +18,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -38,8 +39,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
-import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Component
@@ -48,6 +47,8 @@ public class AlphabetReplaceViewController {
 
     private static final String LIGHT_THEME_CLASS = "theme-light";
     private static final String DARK_THEME_CLASS = "theme-dark";
+    private static final String REPLACE_PROGRESS_DEFAULT_TEXT = "Идет замена...";
+    private static final String REPLACE_PROGRESS_TEXT_TEMPLATE = "Идет замена... %d%%";
     private static final PseudoClass NEW_ROW_PSEUDO_CLASS = PseudoClass.getPseudoClass("new-row");
     private static final double ALPHABET_EDITOR_MIN_ROW_HEIGHT = 52.0;
     private static final double ALPHABET_EDITOR_LINE_HEIGHT = 20.0;
@@ -68,6 +69,15 @@ public class AlphabetReplaceViewController {
 
     @FXML
     private Button startReplaceButton;
+
+    @FXML
+    private Button replaceDirectorySelectedButton;
+
+    @FXML
+    private ProgressIndicator replaceProgressIndicator;
+
+    @FXML
+    private Label replaceProgressLabel;
 
     @FXML
     private TextField replaceFilesCountField;
@@ -126,11 +136,9 @@ public class AlphabetReplaceViewController {
 
     @FXML
     protected void startReplaceButtonClick() {
-        runTask(
-                () -> alphabetReplaceSectionHandler.replace(replaceDirectoryField.getText(), alphabetContent),
-                this::applyReplaceResult,
-                "замену"
-        );
+        clearReplaceResultFields();
+        updateActionButtons();
+        runReplaceTask();
     }
 
     @FXML
@@ -160,27 +168,54 @@ public class AlphabetReplaceViewController {
         }
     }
 
-    private <T> void runTask(Callable<T> action, Consumer<T> onSuccess, String actionName) {
+    private void runReplaceTask() {
         setBusy(true);
 
-        Task<T> task = new Task<>() {
+        Task<AlphabetReplaceService.ReplaceOperationResult> task = new Task<>() {
             @Override
-            protected T call() throws Exception {
-                return action.call();
+            protected AlphabetReplaceService.ReplaceOperationResult call() {
+                updateProgress(0, 1);
+                updateMessage(formatReplaceProgressMessage(0));
+
+                AlphabetReplaceService.ReplaceOperationResult result = alphabetReplaceSectionHandler.replace(
+                        replaceDirectoryField.getText(),
+                        alphabetContent,
+                        (processedFiles, totalFiles) -> {
+                            if (totalFiles <= 0) {
+                                updateProgress(1, 1);
+                                updateMessage(formatReplaceProgressMessage(100));
+                                return;
+                            }
+
+                            int boundedProcessedFiles = Math.min(totalFiles, Math.max(0, processedFiles));
+                            int progressPercent = (int) Math.round((boundedProcessedFiles * 100.0) / totalFiles);
+                            updateProgress(boundedProcessedFiles, totalFiles);
+                            updateMessage(formatReplaceProgressMessage(progressPercent));
+                        }
+                );
+
+                updateProgress(1, 1);
+                updateMessage(formatReplaceProgressMessage(100));
+                return result;
             }
         };
 
+        replaceProgressIndicator.progressProperty().bind(task.progressProperty());
+        replaceProgressLabel.textProperty().bind(task.messageProperty());
+
         task.setOnSucceeded(event -> {
+            unbindReplaceProgressState();
             setBusy(false);
-            onSuccess.accept(task.getValue());
+            applyReplaceResult(task.getValue());
         });
 
         task.setOnFailed(event -> {
+            unbindReplaceProgressState();
             setBusy(false);
-            showError(actionName, task.getException());
+            showError("замену", task.getException());
         });
 
-        Thread worker = new Thread(task, "alphabet-replace-" + actionName);
+        Thread worker = new Thread(task, "alphabet-replace-replacement");
         worker.setDaemon(true);
         worker.start();
     }
@@ -198,6 +233,18 @@ public class AlphabetReplaceViewController {
 
     private void setBusy(boolean busy) {
         this.busy = busy;
+        if (busy) {
+            replaceProgressIndicator.setProgress(0);
+            replaceProgressLabel.setText(formatReplaceProgressMessage(0));
+            outputArea.setText(REPLACE_PROGRESS_DEFAULT_TEXT);
+        }
+
+        replaceDirectoryField.setDisable(busy);
+        replaceDirectorySelectedButton.setDisable(busy);
+        replaceProgressIndicator.setVisible(busy);
+        replaceProgressIndicator.setManaged(busy);
+        replaceProgressLabel.setVisible(busy);
+        replaceProgressLabel.setManaged(busy);
         updateActionButtons();
     }
 
@@ -213,6 +260,26 @@ public class AlphabetReplaceViewController {
         openBackupPathButton.setDisable(!hasBackupPath);
         openLogPathButton.setDisable(!hasLogPath);
         openContextLogPathButton.setDisable(!hasContextLogPath);
+    }
+
+    private void clearReplaceResultFields() {
+        replaceFilesCountField.clear();
+        replaceRulesCountField.clear();
+        replaceTotalCountField.clear();
+        backupPathField.clear();
+        logPathField.clear();
+        contextLogPathField.clear();
+    }
+
+    private void unbindReplaceProgressState() {
+        replaceProgressIndicator.progressProperty().unbind();
+        replaceProgressLabel.textProperty().unbind();
+        replaceProgressLabel.setText(REPLACE_PROGRESS_DEFAULT_TEXT);
+    }
+
+    private String formatReplaceProgressMessage(int progressPercent) {
+        int boundedPercent = Math.min(100, Math.max(0, progressPercent));
+        return REPLACE_PROGRESS_TEXT_TEMPLATE.formatted(boundedPercent);
     }
 
     private void updateAlphabetSummary() {

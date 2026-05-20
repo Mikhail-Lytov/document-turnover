@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -118,7 +119,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
     }
 
     @Override
-    public ReplaceOperationResult replaceInDocuments(Path directory, Path alphabetFile) {
+    public ReplaceOperationResult replaceInDocuments(Path directory, Path alphabetFile, BiConsumer<Integer, Integer> progressCallback) {
         validateDirectory(directory);
         validateAlphabetFile(alphabetFile);
 
@@ -127,11 +128,11 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
             throw new IllegalArgumentException("Файл алфавита не содержит ни одной корректной замены в формате 'что -> на что'.");
         }
 
-        return replaceInDocuments(directory, replacements, alphabetFile.toAbsolutePath().toString());
+        return replaceInDocuments(directory, replacements, alphabetFile.toAbsolutePath().toString(), progressCallback);
     }
 
     @Override
-    public ReplaceOperationResult replaceInDocuments(Path directory, String alphabetContent) {
+    public ReplaceOperationResult replaceInDocuments(Path directory, String alphabetContent, BiConsumer<Integer, Integer> progressCallback) {
         validateDirectory(directory);
         validateAlphabetContent(alphabetContent);
 
@@ -140,13 +141,19 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
             throw new IllegalArgumentException("Алфавит не содержит ни одной корректной замены в формате 'что -> на что'.");
         }
 
-        return replaceInDocuments(directory, replacements, "Встроенный редактор");
+        return replaceInDocuments(directory, replacements, "Встроенный редактор", progressCallback);
     }
 
-    private ReplaceOperationResult replaceInDocuments(Path directory, List<ReplacementRule> replacements, String alphabetSource) {
+    private ReplaceOperationResult replaceInDocuments(
+            Path directory,
+            List<ReplacementRule> replacements,
+            String alphabetSource,
+            BiConsumer<Integer, Integer> progressCallback
+    ) {
         Path sourceDirectory = directory.toAbsolutePath().normalize();
         List<Path> files = listWordFiles(sourceDirectory);
         if (files.isEmpty()) {
+            notifyProgress(progressCallback, 0, 0);
             String report = "=== РЕЗУЛЬТАТ ===\nDOC/DOCX файлы не найдены в выбранной папке.";
             return new ReplaceOperationResult(0, 0, replacements.size(), sourceDirectory, sourceDirectory, null, null, List.of(), report);
         }
@@ -196,6 +203,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
 
         Map<String, ReplacementAggregate> globalStats = new LinkedHashMap<>();
         int totalReplacements = 0;
+        int processedFiles = 0;
 
         ComThread.InitSTA();
         ActiveXComponent word = null;
@@ -204,6 +212,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         try {
             word = createWordApp();
             documents = word.getProperty("Documents").toDispatch();
+            notifyProgress(progressCallback, 0, files.size());
 
             for (Path file : files) {
                 Dispatch document = null;
@@ -304,6 +313,8 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                     contextLogLines.add("");
                 } finally {
                     closeDocument(document);
+                    processedFiles++;
+                    notifyProgress(progressCallback, processedFiles, files.size());
                 }
             }
         } finally {
@@ -356,6 +367,12 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                 List.copyOf(errors),
                 report
         );
+    }
+
+    private void notifyProgress(BiConsumer<Integer, Integer> progressCallback, int processedFiles, int totalFiles) {
+        if (progressCallback != null) {
+            progressCallback.accept(processedFiles, totalFiles);
+        }
     }
 
     private void appendDetailedStats(List<String> target, Map<String, ReplacementAggregate> globalStats) {

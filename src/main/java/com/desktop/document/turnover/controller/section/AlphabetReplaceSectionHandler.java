@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
 import java.util.Locale;
 
 @Component
@@ -106,9 +107,17 @@ public class AlphabetReplaceSectionHandler {
     }
 
     public AlphabetReplaceService.ReplaceOperationResult replace(String directoryPath, String alphabetContent) {
+        return replace(directoryPath, alphabetContent, null);
+    }
+
+    public AlphabetReplaceService.ReplaceOperationResult replace(
+            String directoryPath,
+            String alphabetContent,
+            BiConsumer<Integer, Integer> progressCallback
+    ) {
         Path directory = parseDirectory(directoryPath, "Папка с документами");
         String normalizedAlphabetContent = normalizeAlphabetContent(alphabetContent);
-        return alphabetReplaceService.replaceInDocuments(directory, normalizedAlphabetContent);
+        return alphabetReplaceService.replaceInDocuments(directory, normalizedAlphabetContent, progressCallback);
     }
 
     public AlphabetReplaceService.SearchOperationResult search(String directoryPath, String searchText) {
