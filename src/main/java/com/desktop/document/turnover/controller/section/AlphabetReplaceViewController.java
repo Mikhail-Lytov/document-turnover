@@ -1,7 +1,10 @@
 package com.desktop.document.turnover.controller.section;
 
 import com.desktop.document.turnover.service.api.alphabet.AlphabetReplaceService;
+import com.desktop.document.turnover.service.api.word.WordComparisonService;
+import com.desktop.document.turnover.service.api.word.WordComparisonService.ComparisonTarget;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -17,6 +20,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
@@ -39,6 +43,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -57,6 +63,7 @@ public class AlphabetReplaceViewController {
     private static final double ALPHABET_EDITOR_AVERAGE_CHAR_WIDTH = 7.5;
 
     private final AlphabetReplaceSectionHandler alphabetReplaceSectionHandler;
+    private final WordComparisonService wordComparisonService;
 
     @FXML
     private TextField replaceDirectoryField;
@@ -107,10 +114,14 @@ public class AlphabetReplaceViewController {
     private Button openContextLogPathButton;
 
     @FXML
+    private Button openComparisonDialogButton;
+
+    @FXML
     private TextArea outputArea;
 
     private boolean busy;
     private String alphabetContent = "";
+    private List<ComparisonTarget> comparisonTargets = List.of();
 
     @FXML
     private void initialize() {
@@ -166,6 +177,17 @@ public class AlphabetReplaceViewController {
         } catch (Exception exception) {
             showError("открытие лога контекстов", exception);
         }
+    }
+
+    @FXML
+    protected void openComparisonDialogButtonClick() {
+        if (comparisonTargets.isEmpty()) {
+            showWarning(replaceDirectoryField.getScene() != null ? replaceDirectoryField.getScene().getWindow() : null,
+                    "Нет измененных Word-файлов для сравнения.");
+            return;
+        }
+
+        showComparisonDialog();
     }
 
     private void runReplaceTask() {
@@ -228,6 +250,7 @@ public class AlphabetReplaceViewController {
         logPathField.setText(result.logFile() != null ? result.logFile().toAbsolutePath().toString() : "");
         contextLogPathField.setText(result.contextLogFile() != null ? result.contextLogFile().toAbsolutePath().toString() : "");
         outputArea.setText(result.report());
+        comparisonTargets = buildComparisonTargets(result);
         updateActionButtons();
     }
 
@@ -254,12 +277,14 @@ public class AlphabetReplaceViewController {
         boolean hasBackupPath = backupPathField.getText() != null && !backupPathField.getText().isBlank();
         boolean hasLogPath = logPathField.getText() != null && !logPathField.getText().isBlank();
         boolean hasContextLogPath = contextLogPathField.getText() != null && !contextLogPathField.getText().isBlank();
+        boolean hasComparisonTargets = !comparisonTargets.isEmpty();
 
         startReplaceButton.setDisable(busy || !hasDirectory || !hasAlphabet);
         openAlphabetEditorButton.setDisable(busy);
         openBackupPathButton.setDisable(!hasBackupPath);
         openLogPathButton.setDisable(!hasLogPath);
         openContextLogPathButton.setDisable(!hasContextLogPath);
+        openComparisonDialogButton.setDisable(busy || !hasComparisonTargets);
     }
 
     private void clearReplaceResultFields() {
@@ -269,6 +294,7 @@ public class AlphabetReplaceViewController {
         backupPathField.clear();
         logPathField.clear();
         contextLogPathField.clear();
+        comparisonTargets = List.of();
     }
 
     private void unbindReplaceProgressState() {
@@ -361,6 +387,120 @@ public class AlphabetReplaceViewController {
         dialog.setScene(scene);
         Platform.runLater(() -> focusFirstEditableRow(table));
         dialog.showAndWait();
+    }
+
+    private void showComparisonDialog() {
+        Window owner = replaceDirectoryField.getScene() != null ? replaceDirectoryField.getScene().getWindow() : null;
+
+        Stage dialog = new Stage();
+        dialog.setTitle("Сравнение файлов Word");
+        dialog.initModality(Modality.WINDOW_MODAL);
+        if (owner != null) {
+            dialog.initOwner(owner);
+        }
+
+        TableView<ComparisonTarget> table = createComparisonTable(comparisonTargets);
+
+        Button closeButton = new Button("Закрыть");
+        closeButton.setCancelButton(true);
+        closeButton.setOnAction(event -> dialog.close());
+
+        HBox footer = new HBox(8, closeButton);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox root = new VBox(10, table, footer);
+        root.getStyleClass().addAll("app-root", "word-comparison-root");
+        root.setPadding(new Insets(14));
+
+        Scene scene = new Scene(root, 760, 420);
+        Scene ownerScene = replaceDirectoryField.getScene();
+        if (ownerScene != null) {
+            scene.getStylesheets().addAll(ownerScene.getStylesheets());
+            inheritTheme(ownerScene, root);
+        }
+
+        dialog.setScene(scene);
+        dialog.show();
+    }
+
+    private List<ComparisonTarget> buildComparisonTargets(AlphabetReplaceService.ReplaceOperationResult result) {
+        if (result.changedFiles() == null || result.changedFiles().isEmpty()) {
+            return List.of();
+        }
+
+        Set<Path> changedFiles = result.changedFiles().stream()
+                .map(path -> path.toAbsolutePath().normalize())
+                .collect(Collectors.toSet());
+
+        return wordComparisonService.findComparisonTargets(result.sourcePath(), result.backupPath()).stream()
+                .filter(target -> changedFiles.contains(target.revisedFile().toAbsolutePath().normalize()))
+                .toList();
+    }
+
+    private TableView<ComparisonTarget> createComparisonTable(List<ComparisonTarget> comparisonTargets) {
+        TableView<ComparisonTarget> table = new TableView<>(FXCollections.observableArrayList(comparisonTargets));
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        table.getStyleClass().add("word-comparison-table");
+
+        TableColumn<ComparisonTarget, String> fileColumn = new TableColumn<>("Имя файла");
+        fileColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().fileName()));
+        fileColumn.setResizable(false);
+        fileColumn.prefWidthProperty().bind(table.widthProperty().subtract(2).multiply(0.66));
+
+        TableColumn<ComparisonTarget, ComparisonTarget> compareColumn = new TableColumn<>("Сравнение");
+        compareColumn.setCellValueFactory(cellData -> new SimpleObjectProperty<>(cellData.getValue()));
+        compareColumn.setCellFactory(column -> createComparisonLinkCell());
+        compareColumn.setResizable(false);
+        compareColumn.prefWidthProperty().bind(table.widthProperty().subtract(2).multiply(0.34));
+
+        table.getColumns().setAll(fileColumn, compareColumn);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        return table;
+    }
+
+    private TableCell<ComparisonTarget, ComparisonTarget> createComparisonLinkCell() {
+        return new TableCell<>() {
+            private final Hyperlink link = new Hyperlink("Сравнить");
+
+            {
+                link.setOnAction(event -> {
+                    ComparisonTarget target = getItem();
+                    if (target != null) {
+                        openWordComparison(target);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(ComparisonTarget item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(null);
+                setGraphic(link);
+            }
+        };
+    }
+
+    private void openWordComparison(ComparisonTarget target) {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                wordComparisonService.openComparison(target.originalFile(), target.revisedFile());
+                return null;
+            }
+        };
+
+        task.setOnFailed(event -> showError("сравнение файлов Word", task.getException()));
+
+        Thread worker = new Thread(task, "word-comparison");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     private TableView<ReplacementRow> createReplacementTable(ObservableList<ReplacementRow> rows) {

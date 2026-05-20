@@ -21,8 +21,11 @@ module com.descktop.project.documentturnover {
 
     opens com.desktop.document.turnover.service.impl.converter to spring.beans, spring.core, spring.context;
     opens com.desktop.document.turnover.service.impl.alphabet to spring.beans, spring.core, spring.context;
+    opens com.desktop.document.turnover.service.impl.word to spring.beans, spring.core, spring.context;
     exports com.desktop.document.turnover.service.api.alphabet;
     opens com.desktop.document.turnover.service.api.alphabet to spring.beans, spring.core, spring.context;
+    exports com.desktop.document.turnover.service.api.word;
+    opens com.desktop.document.turnover.service.api.word to spring.beans, spring.core, spring.context;
     opens com.desktop.document.turnover to javafx.fxml, spring.core, spring.beans, spring.context;
     exports com.desktop.document.turnover;
     exports com.desktop.document.turnover.controller;

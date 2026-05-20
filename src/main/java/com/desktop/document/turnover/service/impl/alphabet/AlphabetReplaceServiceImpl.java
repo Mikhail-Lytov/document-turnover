@@ -155,10 +155,11 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
         if (files.isEmpty()) {
             notifyProgress(progressCallback, 0, 0);
             String report = "=== РЕЗУЛЬТАТ ===\nDOC/DOCX файлы не найдены в выбранной папке.";
-            return new ReplaceOperationResult(0, 0, replacements.size(), sourceDirectory, sourceDirectory, null, null, List.of(), report);
+            return new ReplaceOperationResult(0, 0, replacements.size(), sourceDirectory, sourceDirectory, List.of(), null, null, List.of(), report);
         }
 
         List<String> errors = new ArrayList<>();
+        List<Path> changedFiles = new ArrayList<>();
         Path backupRootPath = createUniqueBackupPath(sourceDirectory);
         Path backupPath = backupRootPath.resolve("old_file").toAbsolutePath().normalize();
         Path logsPath = backupRootPath.resolve("logs").toAbsolutePath().normalize();
@@ -289,6 +290,9 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                     }
 
                     Dispatch.call(document, "Save");
+                    if (fileReplacements > 0) {
+                        changedFiles.add(file.toAbsolutePath().normalize());
+                    }
                     totalReplacements += fileReplacements;
 
                     if (perFileMain.isEmpty()) {
@@ -362,6 +366,7 @@ public class AlphabetReplaceServiceImpl implements AlphabetReplaceService {
                 replacements.size(),
                 sourceDirectory,
                 backupPath,
+                List.copyOf(changedFiles),
                 logFile,
                 contextLogFile,
                 List.copyOf(errors),

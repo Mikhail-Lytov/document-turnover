@@ -52,7 +52,7 @@
                </children>
             </HBox>
             <Separator />
-            <GridPane hgap="8.0" prefHeight="154.0" prefWidth="512.0" vgap="8.0">
+            <GridPane hgap="8.0" prefHeight="188.0" prefWidth="512.0" vgap="8.0">
                <children>
                   <Label text="Файлов обработано" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                   <TextField fx:id="replaceFilesCountField" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
@@ -93,12 +93,15 @@
                         <Button fx:id="openContextLogPathButton" mnemonicParsing="false" onAction="#openContextLogPathButtonClick" text="Открыть" />
                      </children>
                   </HBox>
+                  <Label text="Сравнение Word" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                  <Button fx:id="openComparisonDialogButton" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#openComparisonDialogButtonClick" text="Открыть список сравнений" GridPane.columnIndex="1" GridPane.rowIndex="6" />
                </children>
                <columnConstraints>
                   <ColumnConstraints />
                   <ColumnConstraints />
                </columnConstraints>
                <rowConstraints>
+                  <RowConstraints />
                   <RowConstraints />
                   <RowConstraints />
                   <RowConstraints />

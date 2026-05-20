@@ -41,6 +41,7 @@ public interface AlphabetReplaceService {
             int rulesLoaded,
             Path sourcePath,
             Path backupPath,
+            List<Path> changedFiles,
             Path logFile,
             Path contextLogFile,
             List<String> errors,

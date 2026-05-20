@@ -445,6 +445,10 @@
     -fx-background-color: -app-bg-top;
 }
 
+.word-comparison-root {
+    -fx-background-color: -app-bg-top;
+}
+
 .alphabet-editor-actions {
     -fx-alignment: center-left;
 }
@@ -468,7 +472,8 @@
     -fx-background-color: -accent-pressed;
 }
 
-.table-view.alphabet-editor-table {
+.table-view.alphabet-editor-table,
+.table-view.word-comparison-table {
     -fx-background-color: -control-bg;
     -fx-background-radius: 10;
     -fx-border-color: -panel-border;
@@ -476,30 +481,36 @@
     -fx-border-width: 1;
 }
 
-.table-view.alphabet-editor-table .column-header-background {
+.table-view.alphabet-editor-table .column-header-background,
+.table-view.word-comparison-table .column-header-background {
     -fx-background-color: -control-hover;
     -fx-background-radius: 10 10 0 0;
     -fx-border-color: transparent transparent -panel-border transparent;
 }
 
 .table-view.alphabet-editor-table .column-header,
-.table-view.alphabet-editor-table .filler {
+.table-view.alphabet-editor-table .filler,
+.table-view.word-comparison-table .column-header,
+.table-view.word-comparison-table .filler {
     -fx-background-color: transparent;
     -fx-size: 36;
 }
 
-.table-view.alphabet-editor-table .column-header .label {
+.table-view.alphabet-editor-table .column-header .label,
+.table-view.word-comparison-table .column-header .label {
     -fx-font-weight: 700;
     -fx-text-fill: -text-main;
 }
 
-.table-view.alphabet-editor-table .table-row-cell {
+.table-view.alphabet-editor-table .table-row-cell,
+.table-view.word-comparison-table .table-row-cell {
     -fx-background-color: -control-bg;
     -fx-border-color: transparent transparent -panel-border transparent;
     -fx-min-height: 52;
 }
 
-.table-view.alphabet-editor-table .table-row-cell:odd {
+.table-view.alphabet-editor-table .table-row-cell:odd,
+.table-view.word-comparison-table .table-row-cell:odd {
     -fx-background-color: -control-hover;
 }
 
@@ -507,15 +518,23 @@
     -fx-background-color: -nav-item-hover-bg;
 }
 
-.table-view.alphabet-editor-table .table-row-cell:selected {
+.table-view.alphabet-editor-table .table-row-cell:selected,
+.table-view.word-comparison-table .table-row-cell:selected {
     -fx-background-color: -nav-item-active-bg;
     -fx-border-color: transparent transparent -nav-item-active-border transparent;
 }
 
-.table-view.alphabet-editor-table .table-cell {
+.table-view.alphabet-editor-table .table-cell,
+.table-view.word-comparison-table .table-cell {
     -fx-border-color: transparent;
     -fx-text-fill: -control-text;
     -fx-padding: 0 10 0 10;
+}
+
+.table-view.word-comparison-table .hyperlink {
+    -fx-text-fill: -accent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
 }
 
 .text-field.alphabet-editor-cell-field,
